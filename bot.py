@@ -11,7 +11,7 @@ def is_me():
 
 @client.event
 async def on_ready():
-    await client.change_presence(status=discord.Status.idle, activity=discord.Game('Taking over the world'))
+    await client.change_presence(status=discord.Status.online, activity=discord.Game('Taking over the world'))
     print('Skynet is online')
 
 @client.event
