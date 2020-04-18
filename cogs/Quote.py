@@ -21,17 +21,21 @@ class Quote(commands.Cog):
 
     @commands.command()
     async def quoteadd(self, ctx):
-        await ctx.send("quote Add")
+        await ctx.send("quote Add not done yet sorry")
 
     @commands.command()
     async def quotefrom(self, ctx, author):
-       await self.findRandomQuote(ctx, {"author": author})
+       try:
+        await self.findRandomQuote(ctx, {"author": author.capitalize()})
+       except Exception:
+        print(Exception)
+        await ctx.send("Could not find a quote from that person")
 
     async def findRandomQuote(self, ctx, params = {}):
         db = self.mongoClient["Skynet"]
         collection = db["Quotes"]
         doc = collection.find(params)
-        randomInt = random.randint(0, doc.__sizeof__())
+        randomInt = random.randint(0, doc.count()-1)
         result = doc.limit(1).skip(randomInt)
         randomDoc = result.next()
         quote, author, context, year = randomDoc.get('quote'), randomDoc.get('author'), randomDoc.get('context'), randomDoc.get('year')
