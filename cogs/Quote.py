@@ -39,7 +39,7 @@ class Quote(commands.Cog):
         result = doc.limit(1).skip(randomInt)
         randomDoc = result.next()
         quote, author, context, year = randomDoc.get('quote'), randomDoc.get('author'), randomDoc.get('context'), randomDoc.get('year')
-        await ctx.send(f'{quote} -{author} {context} {year}')
+        await ctx.send(f'"{quote}" -{author} {context} {year}')
 
 
 def setup(client):
