@@ -1,0 +1,4 @@
+discord.py
+dnspython
+pymongo
+youtube_dl
