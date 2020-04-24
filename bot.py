@@ -1,12 +1,13 @@
 import discord
 import os
 from discord.ext import commands
+import utils.Util as botUtil
 
 client = commands.Bot(command_prefix="//")
 
 def is_me():
     def predicate(ctx):
-        return ctx.message.author.id == 188313190214533120
+        return botUtil.isVexrax(ctx.message.author.id)
     return commands.check(predicate)
 
 @client.event
