@@ -19,7 +19,7 @@ class Randomness(commands.Cog):
     async def rolldice(self, ctx):
         await ctx.send(f'Dice rolled a {random.randint(1,6)}')
 
-        
+
 
 def setup(client):
     client.add_cog(Randomness(client))
