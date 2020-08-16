@@ -1,10 +1,10 @@
-import discord
-from discord.ext import commands
 import os
 import random
 import time
+
+from discord.ext import commands
 from pymongo import MongoClient
-from discord.utils import get
+
 import utils.Util as botUtil
 
 votesrequired = 5
@@ -36,7 +36,7 @@ class Quote(commands.Cog):
         await message.add_reaction('👍')
         await message.add_reaction('👎')
         time.sleep(timeforvote)
-        if await self.votePassed(ctx, ctx.channel, message.id):
+        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, votesrequired):
             await self.addQuoteToDatabase(ctx, author, year, quote)
 
     @commands.command()
@@ -60,19 +60,6 @@ class Quote(commands.Cog):
         randomDoc = result.next()
         quote, author, context, year = randomDoc.get('quote'), randomDoc.get('author'), randomDoc.get('context'), randomDoc.get('year')
         await ctx.send(f'"{quote}" -{author} {context} {year}')
-
-    async def votePassed(self, ctx, channel, messageid):
-        message = await channel.fetch_message(messageid)
-
-        if ( get(message.reactions, emoji='👍').count + get(message.reactions, emoji='👎').count ) < votesrequired + 2: #2 is for the offset by the default votes by the bot
-            await ctx.send("Vote has failed, not enough votes were cast")
-            return False
-        elif ( get(message.reactions, emoji='👍').count - get(message.reactions, emoji='👎').count ) > 4:
-            await ctx.send("Vote has passed, adding the quote to the database")
-            return True
-        else:
-            await ctx.send("Vote has failed, the quote did not receive enough support to be added to the database")
-            return False
 
     async def addQuoteToDatabase(self, ctx, author, year, quote):
         try:

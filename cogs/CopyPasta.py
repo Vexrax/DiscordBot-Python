@@ -1,17 +1,19 @@
 import discord
 import random
+import utils.Util as botUtil
 from discord.ext import commands
+from pymongo import MongoClient
+import os
+import time
+
+votesrequired = 4
+timeforvote = 90 # in seconds
 
 class CopyPasta(commands.Cog):
 
-    pastas =  [
-        "If Earleking has million number of fans i am one of them. if Earleking has ten fans i am one of them. if Earleking has no fans. that means i am no more on the earth. if world against Earleking , i am against the world. i love Earleking till my last breath... die hard fan of Earleking . Hit like if u think Earleking best & smart in the world",
-        "Earleking makes: \n my rod needlessly large \n my wand blast \n my phantom dance \n my cannon rapidly fire \n my tome amplify \n my hydra ravenous \n my spellbook unseal",
-        "Earleking fired up his stream for another day of soloQ, but foolishly forgot to check if Vexrax was in a game. He opened up Vexrax’s stream to find him sitting in queue… He frantically began tabbing between his client and Vexrax’s stream, then one after the other… both queues popped. “I need the toilet” he said to his chat. He ran to the wall and unplugged his internet. He was safe for another day."
-    ]
-
     def __init__(self, client):
         self.client = client
+        self.mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -19,8 +21,34 @@ class CopyPasta(commands.Cog):
 
     @commands.command()
     async def copypasta(self, ctx):
-        for pasta in self.pastas:
-            await ctx.send(pasta)
+        db = self.mongoClient["Skynet"]
+        collection = db["CopyPasta"].find({})
+        for document in collection:
+            await ctx.send(embed=discord.Embed( title=document.get("title"), description=document.get("description"), color=discord.Color.dark_purple()))
+
+    @commands.command()
+    async def copypastaadd(self, ctx, pasta, title):
+
+        if botUtil.isVexrax(ctx.message.author.id):
+            await self.addCopyPastaToDatabase(ctx, pasta, title)
+            await ctx.send("Admin added copypasta, adding to the database")
+            return
+
+        message = await ctx.send(f"Vote has been started to add the copypasta '{pasta}' to the list react with 👍 or 👎 to vote on if this quote should be added")
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+        time.sleep(timeforvote)
+        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, votesrequired):
+            await self.addCopyPastaToDatabase(ctx, pasta, title)
+
+    async def addCopyPastaToDatabase(self, ctx, pasta, title):
+        try:
+            db = self.mongoClient["Skynet"]
+            collection = db["CopyPasta"]
+            collection.insert_one({'title' : title, "description": pasta })
+            await ctx.send("Added pasta to database")
+        except Exception:
+            await ctx.send("Failed to add the quote to the database")
 
 def setup(client):
     client.add_cog(CopyPasta(client))
