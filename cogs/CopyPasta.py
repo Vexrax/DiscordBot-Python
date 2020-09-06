@@ -24,7 +24,11 @@ class CopyPasta(commands.Cog):
         db = self.mongoClient["Skynet"]
         collection = db["CopyPasta"].find({})
         for document in collection:
-            await ctx.send(embed=discord.Embed( title=document.get("title"), description=document.get("description"), color=discord.Color.dark_purple()))
+            descriptionArr = document.get('description').split("\\r\\n") # handling newlines manually because mongo doesnt seem to do it right?
+            description = ""
+            for line in descriptionArr:
+                description += line + "\n\n"
+            await ctx.send(embed=discord.Embed( title=document.get("title"), description=description, color=discord.Color.dark_purple()))
 
     @commands.command()
     async def copypastaadd(self, ctx, pasta, title):
