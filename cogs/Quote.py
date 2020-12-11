@@ -7,8 +7,7 @@ from pymongo import MongoClient
 
 import utils.Util as botUtil
 
-votesrequired = 5
-timeforvote = 90 # in seconds
+import json
 
 class Quote(commands.Cog):
 
@@ -32,12 +31,11 @@ class Quote(commands.Cog):
             await ctx.send("Admin added quote, adding to the database")
             return
 
-        message = await ctx.send(f"Vote has been started to add the quote '{quote} -{author} {year} to the list react with 👍 or 👎 to vote on if this quote should be added")
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
-        time.sleep(timeforvote)
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, votesrequired):
-            await self.addQuoteToDatabase(ctx, author, year, quote)
+        voteText = f"Vote has been started to add the quote '{quote} -{author} {year} to the list react with 👍 or 👎 to vote on if this quote should be added"
+        message = botUtil.setupVote(ctx, voteText)
+        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+            print("passed")
+            #await self.addQuoteToDatabase(ctx, author, year, quote)
 
     @commands.command()
     async def quote(self, ctx):
@@ -70,5 +68,24 @@ class Quote(commands.Cog):
         except Exception:
             await ctx.send("Failed to add the quote to the database")
 
+    @commands.command()
+    async def backupLocal(self, ctx):
+        if not botUtil.isVexrax(ctx.message.author.id):
+            return
+        db = self.mongoClient["Skynet"]
+        collection = db["Quotes"]
+        f = open("quoteBackup.json", "a")
+        f.write("[")
+        newDict = {}
+        for document in collection.find():
+
+            #this is bad but its internal Command so whatever
+            newDict['quote'] = document['quote']
+            newDict['year'] = document['year']
+            newDict['author'] = document['author']
+            newDict['context'] = document['context']
+            f.write(json.dumps(newDict) + ",")
+        f.write("]")
+        f.close()
 def setup(client):
     client.add_cog(Quote(client))
