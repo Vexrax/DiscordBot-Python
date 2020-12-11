@@ -13,12 +13,13 @@ class Mute(commands.Cog):
         print("Mute Command Ready")
 
     @commands.command()
-    async def voteMute(self, ctx, *, user):
+    async def voteMute(self, ctx, user):
 
         if self.isAMention(user):
             await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")
             return
 
+        temp = user[3:-1]
         user = await ctx.guild.fetch_member(user[3:-1])
         target = user.mention
 
@@ -32,7 +33,7 @@ class Mute(commands.Cog):
         await self.sendDemocracy(ctx)
 
     @commands.command()
-    async def voteUnmute(self, ctx, *, user):
+    async def voteUnmute(self, ctx, user):
 
         if self.isAMention(user):
             await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")

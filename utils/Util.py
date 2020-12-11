@@ -16,6 +16,7 @@ def isVexrax(id):
 
 
 async def hasVotePassed(ctx, channel, messageid, votesrequired):
+
     message = await channel.fetch_message(messageid)
 
     if (get(message.reactions, emoji='👍').count + get(message.reactions, emoji='👎').count ) < votesrequired + 2: #2 is for the offset by the default votes by the bot
