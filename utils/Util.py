@@ -14,9 +14,11 @@ def getVotesRequired():
 def isVexrax(id):
     return id == 188313190214533120
 
+def isSkynet(id):
+    return id == 361282484400553985
 
 async def hasVotePassed(ctx, channel, messageid, votesrequired):
-
+    return True
     message = await channel.fetch_message(messageid)
 
     if (get(message.reactions, emoji='👍').count + get(message.reactions, emoji='👎').count ) < votesrequired + 2: #2 is for the offset by the default votes by the bot
@@ -35,3 +37,6 @@ async def setupVote(ctx, voteMessage):
     await message.add_reaction('👎')
     time.sleep(timeforvote)
     return message
+
+async def sendDemocracy(ctx):
+        await ctx.send("https://i.imgur.com/z9gqMMw.gif")

@@ -13,14 +13,12 @@ class Mute(commands.Cog):
         print("Mute Command Ready")
 
     @commands.command()
-    async def voteMute(self, ctx, user):
+    async def voteMute(self, ctx):
 
-        if self.isAMention(user):
-            await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")
+        if not await self.canUseCommand(ctx):
             return
 
-        temp = user[3:-1]
-        user = await ctx.guild.fetch_member(user[3:-1])
+        user = ctx.message.mentions[0]
         target = user.mention
 
         voteMessage = f"Vote has been started to mute the user {target} react with 👍 or 👎 to vote on if this user should be muted"
@@ -30,16 +28,15 @@ class Mute(commands.Cog):
             await ctx.send(f"Vote Passed, {target} has been muted. You may vote to unmute him with voteUnmute!")
         else:
             await ctx.send(f"Vote Failed, you could not silence {target}!")
-        await self.sendDemocracy(ctx)
+        await botUtil.sendDemocracy(ctx)
 
     @commands.command()
-    async def voteUnmute(self, ctx, user):
+    async def voteUnmute(self, ctx):
 
-        if self.isAMention(user):
-            await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")
+        if not await self.canUseCommand(ctx):
             return
 
-        user = await ctx.guild.fetch_member(user[3:-1])
+        user = ctx.message.mentions[0]
         target = user.mention
 
         voteMessage = f"Vote has been started to unmute the user {target} react with 👍 or 👎 to vote on if this user should be unmuted"
@@ -49,13 +46,15 @@ class Mute(commands.Cog):
             await ctx.send(f"Vote Passed, {target} has been unmuted. You may vote to unmute him with voteUnmute!")
         else:
             await ctx.send(f"Vote Failed, you could not unsilence {target}!")
-        await self.sendDemocracy(ctx)
+        await botUtil.sendDemocracy(ctx)
 
-    async def sendDemocracy(self, ctx):
-        await ctx.send("https://i.imgur.com/z9gqMMw.gif")
+    async def canUseCommand(self, ctx):
 
-    def isAMention(self, user):
-        return not user.startswith('<@!') and not user[-1] == '>'
+        if len(ctx.message.mentions) < 1:
+            await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")
+            return False
+
+        return True
 
 def setup(client):
     client.add_cog(Mute(client))
