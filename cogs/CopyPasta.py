@@ -38,10 +38,9 @@ class CopyPasta(commands.Cog):
             await ctx.send("Admin added copypasta, adding to the database")
             return
 
-        message = await ctx.send(f"Vote has been started to add the copypasta '{pasta}' to the list react with 👍 or 👎 to vote on if this quote should be added")
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
-        time.sleep(timeforvote)
+        voteMessage = f"Vote has been started to add the copypasta '{pasta}' to the list react with 👍 or 👎 to vote on if this quote should be added"
+        message = await botUtil.setupVote(ctx, voteMessage)
+
         if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, votesrequired):
             await self.addCopyPastaToDatabase(ctx, pasta, title)
 

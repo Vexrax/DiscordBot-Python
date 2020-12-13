@@ -46,7 +46,7 @@ class Election(commands.Cog):
     @commands.command()
     async def disposeOfAdmin(self, ctx):
 
-        if not self.canUseCommand(ctx):
+        if not await self.canUseCommand(ctx):
             return
 
         adminRole = discord.utils.get(ctx.guild.roles, name=adminRoleName)

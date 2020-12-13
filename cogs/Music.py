@@ -31,10 +31,10 @@ class Music(commands.Cog):
         # player.start()
         await ctx.send("This command is WIP")
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send('Music command error')
+    # @commands.Cog.listener()
+    # async def on_command_error(self, ctx, error):
+    #     if isinstance(error, commands.MissingRequiredArgument):
+    #         await ctx.send('Music command error')
 
 def setup(client):
     client.add_cog(Music(client))

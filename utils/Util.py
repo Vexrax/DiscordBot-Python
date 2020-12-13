@@ -1,9 +1,11 @@
 import time
-
+import asyncio
 from discord.utils import get
 
-votesrequired = 5
+votesrequired = 4
 timeforvote = 90 # in seconds
+vexraxId = 188313190214533120
+skynetId = 361282484400553985
 
 def getTimeForVote():
     return timeforvote
@@ -12,10 +14,10 @@ def getVotesRequired():
     return votesrequired
 
 def isVexrax(id):
-    return id == 188313190214533120
+    return id == vexraxId
 
 def isSkynet(id):
-    return id == 361282484400553985
+    return id == skynetId
 
 async def hasVotePassed(ctx, channel, messageid, votesrequired):
     message = await channel.fetch_message(messageid)
@@ -34,7 +36,7 @@ async def setupVote(ctx, voteMessage):
     message = await ctx.send(voteMessage)
     await message.add_reaction('👍')
     await message.add_reaction('👎')
-    time.sleep(timeforvote)
+    await asyncio.sleep(timeforvote)
     return message
 
 async def sendDemocracy(ctx):

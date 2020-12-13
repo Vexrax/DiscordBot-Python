@@ -43,7 +43,8 @@ async def unload(ctx, extension):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send('Command not found')
-    print(error)
+    user = client.get_user(botUtil.vexraxId)
+    await user.send(error)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
