@@ -34,8 +34,7 @@ class Quote(commands.Cog):
         voteText = f"Vote has been started to add the quote '{quote} -{author} {year} to the list react with 👍 or 👎 to vote on if this quote should be added"
         message = await botUtil.setupVote(ctx, voteText)
         if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
-            print("passed")
-            #await self.addQuoteToDatabase(ctx, author, year, quote)
+            await self.addQuoteToDatabase(ctx, author, year, quote)
 
     @commands.command()
     async def quote(self, ctx):
