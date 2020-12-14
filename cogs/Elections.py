@@ -2,8 +2,10 @@ import discord
 import random
 from discord.ext import commands
 import utils.Util as botUtil
+import utils.VoteUtil as voteUtil
 
 adminRoleName = "Admin"
+voteRequiredToPass = 500
 
 class Election(commands.Cog):
 
@@ -13,6 +15,12 @@ class Election(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Election Command Ready")
+
+    @commands.command()
+    async def whatIsMyVotingPower(self, ctx):
+        embed = discord.Embed(title=f" {ctx.message.author.name.capitalize()}'s Voting Power", description=f"Voting Power: { await voteUtil.calculateUserVotingPower(ctx.message.author)}", color=discord.Color.blurple())
+        embed.set_footer(text="You get 1 Vote for every 31 days you have been apart of the server")
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def startElectionFor(self, ctx):
@@ -30,10 +38,9 @@ class Election(commands.Cog):
             return
 
         voteMessage = f"{nomination} has been nominated to become an  {adminRole.name}, react with 👍 or 👎 to vote on if this user should be promoted to  {adminRole.name}"
-        message = await botUtil.setupVote(ctx, voteMessage)
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
 
-
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, voteRequiredToPass):
             await user.add_roles(adminRole)
             await ctx.send(f"{nomination} has been received enough support and is now an {adminRole.name}")
         else:
@@ -59,9 +66,9 @@ class Election(commands.Cog):
             return
 
         voteMessage = f"{nomination} has been nominated to be disposed and lose their {adminRole.name} rank, react with 👍 or 👎 to vote on if this user should be disposed"
-        message = await botUtil.setupVote(ctx, voteMessage)
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
 
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, voteRequiredToPass):
             await user.remove_roles(adminRole)
             await ctx.send(f"{nomination} has received enough votes to be disposed, {nomination} has lost thier  {adminRole.name} rank")
         else:

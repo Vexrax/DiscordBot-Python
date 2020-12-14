@@ -5,9 +5,9 @@ from discord.ext import commands
 from pymongo import MongoClient
 import os
 import time
+import utils.VoteUtil as voteUtil
 
-votesrequired = 4
-timeforvote = 90 # in seconds
+votesRequiredToPass = 150
 
 class CopyPasta(commands.Cog):
 
@@ -39,9 +39,9 @@ class CopyPasta(commands.Cog):
             return
 
         voteMessage = f"Vote has been started to add the copypasta '{pasta}' to the list react with 👍 or 👎 to vote on if this quote should be added"
-        message = await botUtil.setupVote(ctx, voteMessage)
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
 
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, votesrequired):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
             await self.addCopyPastaToDatabase(ctx, pasta, title)
 
     async def addCopyPastaToDatabase(self, ctx, pasta, title):

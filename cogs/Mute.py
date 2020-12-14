@@ -2,6 +2,9 @@ import discord
 import random
 from discord.ext import commands
 import utils.Util as botUtil
+import utils.VoteUtil as voteUtil
+
+votesRequiredToPass = 300
 
 class Mute(commands.Cog):
 
@@ -22,8 +25,8 @@ class Mute(commands.Cog):
         target = user.mention
 
         voteMessage = f"Vote has been started to mute the user {target} react with 👍 or 👎 to vote on if this user should be muted"
-        message = await botUtil.setupVote(ctx, voteMessage)
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
             await user.edit(mute=True)
             await ctx.send(f"Vote Passed, {target} has been muted. You may vote to unmute him with voteUnmute!")
         else:
@@ -40,8 +43,8 @@ class Mute(commands.Cog):
         target = user.mention
 
         voteMessage = f"Vote has been started to unmute the user {target} react with 👍 or 👎 to vote on if this user should be unmuted"
-        message = await botUtil.setupVote(ctx, voteMessage)
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
             await user.edit(mute=False)
             await ctx.send(f"Vote Passed, {target} has been unmuted. You may vote to unmute him with voteUnmute!")
         else:

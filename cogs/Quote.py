@@ -6,8 +6,11 @@ from discord.ext import commands
 from pymongo import MongoClient
 
 import utils.Util as botUtil
+import utils.VoteUtil as voteUtil
 
 import json
+
+votesRequiredToPass = 250
 
 class Quote(commands.Cog):
 
@@ -32,8 +35,8 @@ class Quote(commands.Cog):
             return
 
         voteText = f"Vote has been started to add the quote '{quote} -{author} {year} to the list react with 👍 or 👎 to vote on if this quote should be added"
-        message = await botUtil.setupVote(ctx, voteText)
-        if await botUtil.hasVotePassed(ctx, ctx.channel, message.id, botUtil.votesrequired):
+        message = await voteUtil.setupVote(ctx, voteText, voteUtil.timeforvote)
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
             await self.addQuoteToDatabase(ctx, author, year, quote)
 
     @commands.command()
