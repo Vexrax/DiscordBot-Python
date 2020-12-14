@@ -18,7 +18,8 @@ class Election(commands.Cog):
 
     @commands.command()
     async def whatIsMyVotingPower(self, ctx):
-        embed = discord.Embed(title=f" {ctx.message.author.name.capitalize()}'s Voting Power", description=f"Voting Power: { 0 }", color=discord.Color.blurple())
+        power = await voteUtil.calculateUserVotingPower(ctx.message.author)
+        embed = discord.Embed(title=f" {ctx.message.author.name.capitalize()}'s Voting Power", description=f"Voting Power: { power}", color=discord.Color.blurple())
         embed.set_footer(text="You get 1 Vote for every 31 days you have been apart of the server")
         await ctx.send(embed=embed)
 
