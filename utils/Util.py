@@ -2,7 +2,7 @@ import time
 import asyncio
 from discord.utils import get
 
-votesrequired = 4
+votesrequired = 8
 timeforvote = 90 # in seconds
 vexraxId = 188313190214533120
 skynetId = 361282484400553985
@@ -21,7 +21,6 @@ def isSkynet(id):
 
 async def hasVotePassed(ctx, channel, messageid, votesrequired):
     message = await channel.fetch_message(messageid)
-
     if (get(message.reactions, emoji='👍').count + get(message.reactions, emoji='👎').count ) < votesrequired + 2: #2 is for the offset by the default votes by the bot
         await ctx.send("Vote has failed, not enough votes were cast")
         return False

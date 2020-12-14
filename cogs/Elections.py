@@ -72,6 +72,9 @@ class Election(commands.Cog):
 
     async def canUseCommand(self, ctx):
 
+        # if not botUtil.isVexrax(ctx.message.author.id):
+        #     return False
+
         if len(ctx.message.mentions) < 1:
             await ctx.send("User Specified counldn't be found, please make sure you have correctly @'d a valid user")
             return False
