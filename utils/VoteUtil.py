@@ -3,7 +3,7 @@ import asyncio
 from discord.utils import get
 import datetime
 
-minvotesrequired = 200
+minvotesrequired = 300
 timeforvote = 90 # in seconds
 
 async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
@@ -25,15 +25,20 @@ async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
         return False
     if (upVoteCount - downVoteCount) > votesrequiredToPass:
         await ctx.send("Vote has passed")
+        await ctx.send(f"Upvotes: {upVoteCount}, downVoteCount: {downVoteCount}")
         return True
     else:
-        await ctx.send("Vote has failed, the proposition has not recieved enough support from the people")
+        await ctx.send(f"Vote has failed, the proposition has not recieved enough support from the people")
+        await ctx.send(f"Upvotes: {upVoteCount}, downVoteCount: {downVoteCount}")
         return False
 
 
 # Every 31 days they get 1 vote
 async def calculateUserVotingPower(user):
-    return int(((datetime.datetime.now() - user.joined_at).days)/31)
+    try:
+        return int(((datetime.datetime.now() - user.joined_at).days)/31)
+    except:
+        return 0
 
 async def setupVote(ctx, voteMessage, timeForVote):
     message = await ctx.send(voteMessage)

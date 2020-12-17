@@ -16,7 +16,7 @@ class Election(commands.Cog):
     async def on_ready(self):
         print("Election Command Ready")
 
-    @commands.command()
+    @commands.command(aliases=["whatismyvotingpower"])
     async def whatIsMyVotingPower(self, ctx):
         power = await voteUtil.calculateUserVotingPower(ctx.message.author)
         embed = discord.Embed(title=f" {ctx.message.author.name.capitalize()}'s Voting Power", description=f"Voting Power: { power }", color=discord.Color.blurple())
