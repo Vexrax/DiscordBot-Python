@@ -5,7 +5,8 @@ import utils.Util as botUtil
 import utils.VoteUtil as voteUtil
 
 adminRoleName = "Admin"
-voteRequiredToPass = 400
+voteRequiredToAddAdmin = 400
+votesRequiredToRemoveAdmin = 500
 
 class Election(commands.Cog):
 
@@ -41,7 +42,7 @@ class Election(commands.Cog):
         voteMessage = f"{nomination} has been nominated to become an  {adminRole.name}, react with 👍 or 👎 to vote on if this user should be promoted to  {adminRole.name}"
         message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
 
-        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, voteRequiredToPass):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, voteRequiredToAddAdmin):
             await user.add_roles(adminRole)
             await ctx.send(f"{nomination} has been received enough support and is now an {adminRole.name}")
         else:
@@ -69,7 +70,7 @@ class Election(commands.Cog):
         voteMessage = f"{nomination} has been nominated to be disposed and lose their {adminRole.name} rank, react with 👍 or 👎 to vote on if this user should be disposed"
         message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
 
-        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, voteRequiredToPass):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToRemoveAdmin):
             await user.remove_roles(adminRole)
             await ctx.send(f"{nomination} has received enough votes to be disposed, {nomination} has lost thier  {adminRole.name} rank")
         else:
