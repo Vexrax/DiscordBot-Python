@@ -10,7 +10,7 @@ import utils.VoteUtil as voteUtil
 
 import json
 
-votesRequiredToPass = 250
+votesRequiredToPass = 210
 
 class Quote(commands.Cog):
 
