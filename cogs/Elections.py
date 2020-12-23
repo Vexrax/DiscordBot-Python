@@ -6,7 +6,7 @@ import utils.VoteUtil as voteUtil
 
 adminRoleName = "Admin"
 voteRequiredToAddAdmin = 400
-votesRequiredToRemoveAdmin = 500
+votesRequiredToRemoveAdmin = 400
 
 class Election(commands.Cog):
 
@@ -24,6 +24,7 @@ class Election(commands.Cog):
         embed.set_footer(text="You get 1 Vote for every 31 days you have been apart of the server")
         await ctx.send(embed=embed)
 
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     @commands.command()
     async def startElectionFor(self, ctx):
 
@@ -52,6 +53,7 @@ class Election(commands.Cog):
 
         return
 
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     @commands.command()
     async def disposeOfAdmin(self, ctx):
 

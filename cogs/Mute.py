@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 import random
 from discord.ext import commands
@@ -5,6 +7,8 @@ import utils.Util as botUtil
 import utils.VoteUtil as voteUtil
 
 votesRequiredToPass = 300
+textMuteRoleName = "TextMute"
+timeToStayTextMuted = 120
 
 class Mute(commands.Cog):
 
@@ -50,6 +54,28 @@ class Mute(commands.Cog):
         else:
             await ctx.send(f"Vote Failed, you could not unsilence {target}!")
         await botUtil.sendDemocracy(ctx)
+
+    @commands.command()
+    async def voteTextMute(self, ctx):
+
+        if not await self.canUseCommand(ctx):
+            return
+
+        user = ctx.message.mentions[0]
+        target = user.mention
+        textMuteRole = discord.utils.get(ctx.guild.roles, name=textMuteRoleName)
+
+
+        voteMessage = f"Vote has been started to text mute the user {target} for {timeToStayTextMuted} seconds. react with 👍 or 👎 to vote on if this user should be text muted"
+        message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
+            await user.add_roles(textMuteRole)
+            await ctx.send(f"Vote Passed, {target} has been text muted for {timeToStayTextMuted} seconds")
+        else:
+            await ctx.send(f"Vote Failed, you could not text mute {target}!")
+        await botUtil.sendDemocracy(ctx)
+        await asyncio.sleep(timeToStayTextMuted)
+        await user.remove_roles(textMuteRole)
 
     async def canUseCommand(self, ctx):
 

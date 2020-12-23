@@ -25,11 +25,11 @@ async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
         return False
     if (upVoteCount - downVoteCount) > votesrequiredToPass:
         await ctx.send("Vote has passed")
-        await ctx.send(f"Upvotes: {upVoteCount}, downVoteCount: {downVoteCount}")
+        await ctx.send(f"Upvotes: {upVoteCount}, Down Vote Count: {downVoteCount}")
         return True
     else:
         await ctx.send(f"Vote has failed, the proposition has not recieved enough support from the people")
-        await ctx.send(f"Upvotes: {upVoteCount}, downVoteCount: {downVoteCount}")
+        await ctx.send(f"Upvotes: {upVoteCount}, Down Vote Count: {downVoteCount}, Difference Required: {votesrequiredToPass}")
         return False
 
 
