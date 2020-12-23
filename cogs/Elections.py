@@ -7,6 +7,7 @@ import utils.VoteUtil as voteUtil
 adminRoleName = "Admin"
 voteRequiredToAddAdmin = 400
 votesRequiredToRemoveAdmin = 400
+maxAdmins = 4
 
 class Election(commands.Cog):
 
@@ -32,6 +33,10 @@ class Election(commands.Cog):
             return
 
         adminRole = discord.utils.get(ctx.guild.roles, name=adminRoleName)
+        # adminCount = len(adminRole.members)
+        # if(adminCount > maxAdmins):
+        #     await ctx.send(f"There are too many admins, dispose of one before you try another election. (max admins is {maxAdmins}, current amount of admins is {adminCount})")
+        #     return
 
         user = ctx.message.mentions[0]
         nomination = user.mention
