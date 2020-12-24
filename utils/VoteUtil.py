@@ -20,6 +20,10 @@ async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
     async for user in downvotes.users():
         downVoteCount += await calculateUserVotingPower(user)
 
+    # Edit the message because it seems like people cant read and vote on stuff after the vote is completed
+    currentMessageContent = message.content
+    await message.edit(content=f"**Vote Has Now Ended**\n ~~{currentMessageContent}~~")
+
     if (upVoteCount + downVoteCount) < minvotesrequired:
         await ctx.send(f"Vote has failed, not enough voting power was used. Voting Power Used: {upVoteCount + downVoteCount}, Voting Power Required: {minvotesrequired}")
         return False
