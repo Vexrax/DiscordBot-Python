@@ -3,7 +3,7 @@ import asyncio
 from discord.utils import get
 import datetime
 
-minvotesrequired = 300
+minvotesrequired = 300 #includes skynetVotes
 timeforvote = 90 # in seconds
 
 async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
@@ -21,7 +21,7 @@ async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass):
         downVoteCount += await calculateUserVotingPower(user)
 
     if (upVoteCount + downVoteCount) < minvotesrequired:
-        await ctx.send("Vote has failed, not enough votes were cast")
+        await ctx.send(f"Vote has failed, not enough voting power was used. Voting Power Used: {upVoteCount + downVoteCount}, Voting Power Required: {minvotesrequired}")
         return False
     if (upVoteCount - downVoteCount) > votesrequiredToPass:
         await ctx.send("Vote has passed")
