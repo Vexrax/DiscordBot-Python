@@ -11,6 +11,7 @@ import utils.VoteUtil as voteUtil
 import json
 
 votesRequiredToPass = 200
+minvoteRequired = 220
 
 class Quote(commands.Cog):
 
@@ -36,7 +37,7 @@ class Quote(commands.Cog):
 
         voteText = f"Vote has been started to add the quote '{quote} -{author} {year} to the list react with 👍 or 👎 to vote on if this quote should be added"
         message = await voteUtil.setupVote(ctx, voteText, voteUtil.timeforvote)
-        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
+        if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass, minvoteRequired):
             await self.addQuoteToDatabase(ctx, author, year, quote)
 
     @commands.command()
