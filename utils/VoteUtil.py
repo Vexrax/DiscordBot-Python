@@ -24,7 +24,7 @@ async def hasVotePassed(ctx, channel, messageid, votesrequiredToPass, minVotesRe
     await message.edit(content=f"**Vote Has Now Ended**\n ~~{currentMessageContent}~~")
 
     if (upVoteCount + downVoteCount) < minVotesRequired:
-        await ctx.send(f"Vote has failed, not enough voting power was used. Voting Power Used: {upVoteCount + downVoteCount}\n Minimum Voting Power Required: {minVotesRequired}")
+        await ctx.send(f"Vote has failed, not enough voting power was used.\nVoting Power Used: {upVoteCount + downVoteCount} Minimum Voting Power Required: {minVotesRequired}")
         return False
     if (upVoteCount - downVoteCount) > votesrequiredToPass:
         await ctx.send("Vote has passed")
