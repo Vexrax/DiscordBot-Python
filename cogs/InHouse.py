@@ -9,7 +9,7 @@ import discord
 import json
 
 riotAPIBase = "https://na1.api.riotgames.com"
-APIKEY = 'RGAPI-a6b7577f-8047-4954-95aa-853c60f855e5' #DEV API key expires daily
+APIKEY = '' #DEV API key expires daily
 
 class InHouse(commands.Cog):
 
