@@ -28,6 +28,20 @@ class InHouse(commands.Cog):
         print("Inhouse Command Ready")
 
     @commands.command()
+    async def inHouseHelp(self, ctx):
+        embed = discord.Embed(title="In House Commands", description="Commands for the inhouse bot", color=discord.Color.dark_teal())
+        embed.add_field(name=f"//leaderboard", value=f"Options: (Required)\nwin\nloss\ndpm\ndpg")
+        embed.add_field(name=f"\u200B", value=f"Options:\ncspm\nkills\ndeaths\nassists")
+        embed.add_field(name=f"\u200B", value=f"Options:\navgkills\navgdeaths\navgassists\nhighestavgvisionscore\nlowestavgvisionscore")
+
+
+        embed.add_field(name=f"//stats", value=f"Options:\nSummoner Name (Case sensitive)")
+        embed.add_field(name=f"\u200B", value=f"\u200B")
+        embed.add_field(name=f"\u200B", value=f"\u200B")
+        await ctx.send(embed=embed)
+
+
+    @commands.command(aliases=["leaderboards", "lb", "leaderboard", "stats"])
     async def calculateInHouseStats(self, ctx, option):
 
         # if not botUtil.isVexrax(ctx.message.author.id):
@@ -38,7 +52,9 @@ class InHouse(commands.Cog):
         collection = db["InHouses"]
 
         if option.lower() == 'win':
-            embed = await self.calculateGeneralWinStats(collection)
+            embed = await self.calculateGeneralWinStats(collection, True)
+        elif option.lower() == 'loss':
+            embed = await self.calculateGeneralWinStats(collection, False)
         elif option.lower() == 'dpm':
             embed = await self.calculateGeneralDPMStats(collection)
         elif option.lower() == 'dpg':
@@ -57,6 +73,10 @@ class InHouse(commands.Cog):
             embed = await self.calculateGeneralAverageKDAStats(collection, 'deaths')
         elif option.lower() == 'avgassists':
             embed = await self.calculateGeneralAverageKDAStats(collection, 'assists')
+        elif option.lower() == 'highestavgvisionscore':
+            embed = await self.calculateGeneralVisionScoreStats(collection, True)
+        elif option.lower() == 'lowestavgvisionscore':
+            embed = await self.calculateGeneralVisionScoreStats(collection, False)
         else:
             embed = await self.generatePlayerStats(option, collection)
 
@@ -127,48 +147,69 @@ class InHouse(commands.Cog):
             return discord.Embed(title=f"Summoner Not Found", description=f"FYI: Names are case sensitive", color=discord.Color.dark_red())
 
         playerStats = Counter({})
+
+        goldDiffs = Counter({})
+        xpDiffs = Counter({})
+        csDiffs = Counter({})
+
         gameCount = 0
         totalGameTime = 0
         for matchId in gameIds:
             matchData = await self.cacheControl.getMatchReport(matchId)
             statsForMatch = Counter(self.findStatsFromParticipantList(matchData['participants'], gameIds[matchId]))
+            diffsForMatch = self.generatePlayerDiffsFromMatch(matchData['participants'], gameIds[matchId])
+
+            xp = diffsForMatch["xpPerMinDeltas"]
+            goldDiffs.update(diffsForMatch["goldPerMinDeltas"])
+            xpDiffs.update(xp)
+            csDiffs.update(diffsForMatch["creepsPerMinDeltas"])
             playerStats = statsForMatch + playerStats
+
             gameCount += 1
             totalGameTime += int(matchData['gameDuration'] / 60)
 
-        return await self.generateEmbedForPlayerStats(gameCount, playerStats, summonerName, totalGameTime, f"{ddragonBaseIcon}{await self.getSummonerIcon(summonerName)}.png")
+        return await self.generateEmbedForPlayerStats(gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, f"{ddragonBaseIcon}{await self.getSummonerIcon(summonerName)}.png")
 
-    async def generateEmbedForPlayerStats(self, gameCount, playerStats, summonerName, totalGameTime, iconLink):
+    async def generateEmbedForPlayerStats(self, gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, iconLink):
         embed = discord.Embed(title=f"{summonerName}'s InHouse Stats", description=f"Cool Stats", color=discord.Color.dark_blue())
         embed.set_thumbnail(url=iconLink)
+        embed.set_author(name=summonerName, icon_url=iconLink)
+        embed.add_field(name="Games Played", value=f"{gameCount}")
         embed.add_field(name="Win Rate", value=f"{round(playerStats['win'] / gameCount, 2) * 100}")
         embed.add_field(name="\u200B", value="\u200B")
+
+        embed.add_field(name="Damage Per Gold", value=f"{round(playerStats['totalDamageDealtToChampions'] / playerStats['goldEarned'], 2)}", inline=True)
+        embed.add_field(name="Damage Per Minute", value=f"{round(playerStats['totalDamageDealtToChampions'] / totalGameTime, 2)}", inline=True )
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Damage Per Gold", value=f"{round(playerStats['totalDamageDealtToChampions'] / playerStats['goldEarned'], 2)}")
+
+        embed.add_field(name="Average Kills Per Game", value=f"{round(playerStats['kills'] / gameCount, 2)}", inline=True)
+        embed.add_field(name="Average Deaths Per Game", value=f"{round(playerStats['deaths'] / gameCount, 2)}", inline=True)
+        embed.add_field(name="Average Assists Per Game", value=f"{round(playerStats['assists'] / gameCount, 2)}", inline=True)
+
+        embed.add_field(name="Objective Damage Per Game", value=f"{round(playerStats['damageDealtToObjectives'] / gameCount, 2)}", inline=True)
+        embed.add_field(name="Turrets Killed", value=f"{playerStats['turretKills']}" , inline=True)
         embed.add_field(name="\u200B", value="\u200B")
+
+        embed.add_field(name="CS per min", value=f"{round((playerStats['totalMinionsKilled'] + playerStats['neutralMinionsKilled']) / totalGameTime, 2)}", inline=True)
+        embed.add_field(name="Average Vision Score", value=f"{round((playerStats['visionScore']) / gameCount, 2)}", inline=True)
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Damage Per Minute", value=f"{round(playerStats['totalDamageDealtToChampions'] / totalGameTime, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Average Kills Per Game", value=f"{round(playerStats['kills'] / gameCount, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Average Deaths Per Game", value=f"{round(playerStats['deaths'] / gameCount, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Average Assists Per Game", value=f"{round(playerStats['assists'] / gameCount, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="CS per min", value=f"{round(playerStats['totalMinionsKilled'] / totalGameTime, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Turrets Killed", value=f"{playerStats['turretKills']}")
+
+        embed.add_field(name="Differentials", value="This Section is experimental, stats may be completely wrong", inline=True)
         embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="Objective Damage Per Game",
-                        value=f"{round(playerStats['damageDealtToObjectives'] / gameCount, 2)}")
-        embed.add_field(name="\u200B", value="\u200B")
-        embed.add_field(name="\u200B", value="\u200B")
+
+        embed.add_field(name="XP Diff at 10 (experimental)", value=f"{round((xpDiffs['0-10'] * 10 )/ gameCount, 2)}", inline=True)
+        embed.add_field(name="Gold Diff at 10 (experimental)", value=f"{round((goldDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
+        embed.add_field(name="CS Diff at 10 (experimental)", value=f"{round((csDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
+
+        # embed.add_field(name="\u200B", value="\u200B")
+
+        embed.add_field(name="XP Diff at 20 (experimental)", value=f"{round(((xpDiffs['0-10'] * 10 ) + (xpDiffs['10-20'] * 10 )) / gameCount, 2)}", inline=True)
+        embed.add_field(name="Gold Diff at 20 (experimental)", value=f"{round(((goldDiffs['0-10'] * 10) + (goldDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
+        embed.add_field(name="CS Diff at 20 (experimental)", value=f"{round(((csDiffs['0-10'] * 10) + (csDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
+
+        # embed.add_field(name="\u200B", value="\u200B")
+
         return embed
 
     def findStatsFromParticipantList(self, participantList, targetChampion):
@@ -177,13 +218,50 @@ class InHouse(commands.Cog):
                 return champStats['stats']
         return {}
 
-    async def calculateGeneralWinStats(self, collection):
+    def generatePlayerDiffsFromMatch(self, participantList, targetChampion):
+        timelineTarget = {}
+        particpantId = 0
+        lanePartnerParticipantId = 0
+        for champStats in participantList:
+            if(str(champStats['championId']) == targetChampion):
+                timelineTarget = champStats['timeline']
+                particpantId = champStats['participantId']
+
+        if particpantId <= 5:
+            lanePartnerParticipantId = particpantId + 5
+        else:
+            lanePartnerParticipantId = particpantId - 5
+
+        for champStats in participantList:
+            if(champStats['participantId'] == lanePartnerParticipantId):
+
+                xp = Counter(timelineTarget["xpPerMinDeltas"])
+                cs = Counter(timelineTarget["creepsPerMinDeltas"])
+                gold = Counter(timelineTarget["goldPerMinDeltas"])
+
+                xpEnemy = Counter(champStats['timeline']["xpPerMinDeltas"])
+
+                xp.subtract(xpEnemy)
+                cs.subtract(Counter(champStats['timeline']["creepsPerMinDeltas"]))
+                gold.subtract(Counter(champStats['timeline']["goldPerMinDeltas"]))
+
+                return {
+                    "creepsPerMinDeltas": cs,
+                    "xpPerMinDeltas": xp,
+                    "goldPerMinDeltas": gold
+                }
+
+
+    async def calculateGeneralWinStats(self, collection, highest):
         playersData = await self.aggregateStatsForEveryone(collection)
         winDict = {}
         for key in playersData:
             winDict[key] = round(playersData[key]['win'] / playersData[key]['totalGames'], 2) * 100
-        sortedDict = sorted(winDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, "Top 5 Winrate players", "Cool Stats")
+        sortedDict = sorted(winDict.items(), key=operator.itemgetter(1), reverse=highest)
+        lbName = "Top 5"
+        if not highest:
+            lbName = "Bottom 5"
+        return self.generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players", f"Out of {len(winDict.keys())} players, these players have the {lbName} winrate")
 
     async def calculateGeneralDPMStats(self, collection):
         playersData = await self.aggregateStatsForEveryone(collection)
@@ -191,49 +269,68 @@ class InHouse(commands.Cog):
         for key in playersData:
             DPMDict[key] = round(playersData[key]['totalDamageDealtToChampions'] / (playersData[key]['totalGameTime'] / 60), 2)
         sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPM players", "Cool Stats")
+        return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPM players", "DPM is a statistic that calculates your average damage per minute")
 
     async def calculateGeneralDPGStats(self, collection):
         playersData = await self.aggregateStatsForEveryone(collection)
-        DPMDict = {}
+        DPGDict = {}
         for key in playersData:
-            DPMDict[key] = round(playersData[key]['totalDamageDealtToChampions'] / playersData[key]['goldEarned'], 2)
-        sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPG players", "Cool Stats")
+            DPGDict[key] = round(playersData[key]['totalDamageDealtToChampions'] / playersData[key]['goldEarned'], 2)
+        sortedDict = sorted(DPGDict.items(), key=operator.itemgetter(1), reverse=True)
+        return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPG players", "DPG is a statistic that shows how well a given player uses the gold they are given")
 
     async def calculateGeneralCSPMStats(self, collection):
         playersData = await self.aggregateStatsForEveryone(collection)
-        DPMDict = {}
+        CSPMDict = {}
         for key in playersData:
-            DPMDict[key] = round(playersData[key]['totalMinionsKilled'] / (playersData[key]['totalGameTime'] / 60), 2)
-        sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, "Top 5 CS/M players", "Cool Stats")
+            CSPMDict[key] = round((playersData[key]['totalMinionsKilled'] + playersData[key]['neutralMinionsKilled']) / (playersData[key]['totalGameTime'] / 60), 2)
+        sortedDict = sorted(CSPMDict.items(), key=operator.itemgetter(1), reverse=True)
+        return self.generateLeaderboardEmbed(sortedDict, "Top 5 CS/M players", "Just CS per Min")
 
     async def calculateGeneralKDAStats(self, collection, type):
         playersData = await self.aggregateStatsForEveryone(collection)
-        DPMDict = {}
+        KDADict = {}
         for key in playersData:
-            DPMDict[key] = round(playersData[key][type], 2)
-        sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players", "Cool Stats")
+            KDADict[key] = round(playersData[key][type], 2)
+        sortedDict = sorted(KDADict.items(), key=operator.itemgetter(1), reverse=True)
+        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players", f"Highest total {type} count in the league")
+
+    async def calculateGeneralVisionScoreStats(self, collection, highest):
+        playersData = await self.aggregateStatsForEveryone(collection)
+        KDADict = {}
+        for key in playersData:
+            KDADict[key] = round(playersData[key]['visionScore'] / playersData[key]['totalGames'], 2)
+        sortedDict = sorted(KDADict.items(), key=operator.itemgetter(1), reverse=highest)
+        lbName = "Top"
+        if not highest:
+            lbName = "Bottom"
+        return self.generateLeaderboardEmbed(sortedDict, f"{lbName} 5 Average Vision Score players", f"Cool Stats")
 
     async def calculateGeneralAverageKDAStats(self, collection, type):
         playersData = await self.aggregateStatsForEveryone(collection)
-        DPMDict = {}
+        AVGKDADict = {}
         for key in playersData:
-            DPMDict[key] = round(playersData[key][type] / playersData[key]['totalGames'], 2)
-        sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", "Cool Stats")
+            AVGKDADict[key] = round(playersData[key][type] / playersData[key]['totalGames'], 2)
+        sortedDict = sorted(AVGKDADict.items(), key=operator.itemgetter(1), reverse=True)
+        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", f"Highest average {type} count in the league")
 
     def generateLeaderboardEmbed(self, sortedDict, title, subtitle):
         embed = discord.Embed(title=title, description=subtitle, color=discord.Color.dark_blue())
         i = 0
+        emojiMap = {
+            0 : ":first_place:",
+            1: ":second_place:",
+            2: ":third_place:",
+        }
         for key in sortedDict:
-            embed.add_field(name=f"{key[0]}", value=f"\u200B")
+            emoji = ""
+            if(i < 3):
+                emoji = emojiMap[i]
+            embed.add_field(name=f"{emoji} {key[0]}", value=f"\u200B")
             embed.add_field(name="\u200B", value="\u200B")
             embed.add_field(name=f"{key[1]}", value="\u200B")
             i += 1
-            if i > 5:
+            if i == 5:
                 return embed
         return embed
 
@@ -244,13 +341,18 @@ class InHouse(commands.Cog):
             for player in matchData['participants']:
                 name = document['gameData'][str(player["championId"])]
                 stats = Counter(player["stats"])
+                # timeline = Counter(player["timeline"])
                 if name not in playersData:
                     playersData[name] = Counter({})
                     playersData[name]['totalGameTime'] = 0
                     playersData[name]['totalGames'] = 0
+                    # playersData[name]['timeline'] = {}
                 playersData[name] = playersData[name] + stats
+                # playersData[name]['timeline'] = playersData[name]['timeline'] + timeline
                 playersData[name]['totalGameTime'] += matchData["gameDuration"]
                 playersData[name]['totalGames'] += 1
+
+
         return playersData
 def setup(client):
     client.add_cog(InHouse(client))
