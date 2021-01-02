@@ -15,6 +15,7 @@ import json
 riotAPIBase = "https://na1.api.riotgames.com"
 APIKEY = '' #DEV API key expires daily
 ddragonBaseIcon = "http://ddragon.leagueoflegends.com/cdn/10.25.1/img/profileicon/"
+minRequiredGames = 5
 
 class InHouse(commands.Cog):
 
@@ -30,7 +31,7 @@ class InHouse(commands.Cog):
     @commands.command()
     async def inHouseHelp(self, ctx):
         embed = discord.Embed(title="In House Commands", description="Commands for the inhouse bot", color=discord.Color.dark_teal())
-        embed.add_field(name=f"//leaderboard", value=f"Options: (Required)\nwin\nloss\ndpm\ndpg")
+        embed.add_field(name=f"//leaderboard", value=f"Options: (Required)\nwin\nloss\ndpm\ndpg\nhighestUniqueChampions\nlowestUniqueChampions\n")
         embed.add_field(name=f"\u200B", value=f"Options:\ncspm\nkills\ndeaths\nassists")
         embed.add_field(name=f"\u200B", value=f"Options:\navgkills\navgdeaths\navgassists\nhighestavgvisionscore\nlowestavgvisionscore")
 
@@ -77,6 +78,10 @@ class InHouse(commands.Cog):
             embed = await self.calculateGeneralVisionScoreStats(collection, True)
         elif option.lower() == 'lowestavgvisionscore':
             embed = await self.calculateGeneralVisionScoreStats(collection, False)
+        elif option.lower() == 'highestuniquechampions':
+            embed = await self.calculateUniqueChampionStats(collection, True)
+        elif option.lower() == 'lowestuniquechampions':
+            embed = await self.calculateUniqueChampionStats(collection, False)
         else:
             embed = await self.generatePlayerStats(option, collection)
 
@@ -159,24 +164,23 @@ class InHouse(commands.Cog):
             statsForMatch = Counter(self.findStatsFromParticipantList(matchData['participants'], gameIds[matchId]))
             diffsForMatch = self.generatePlayerDiffsFromMatch(matchData['participants'], gameIds[matchId])
 
-            xp = diffsForMatch["xpPerMinDeltas"]
             goldDiffs.update(diffsForMatch["goldPerMinDeltas"])
-            xpDiffs.update(xp)
+            xpDiffs.update(diffsForMatch["xpPerMinDeltas"])
             csDiffs.update(diffsForMatch["creepsPerMinDeltas"])
             playerStats = statsForMatch + playerStats
 
             gameCount += 1
             totalGameTime += int(matchData['gameDuration'] / 60)
 
-        return await self.generateEmbedForPlayerStats(gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, f"{ddragonBaseIcon}{await self.getSummonerIcon(summonerName)}.png")
+        return await self.generateEmbedForPlayerStats(gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, Counter(gameIds.values()), f"{ddragonBaseIcon}{await self.getSummonerIcon(summonerName)}.png")
 
-    async def generateEmbedForPlayerStats(self, gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, iconLink):
+    async def generateEmbedForPlayerStats(self, gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, champions, iconLink):
         embed = discord.Embed(title=f"{summonerName}'s InHouse Stats", description=f"Cool Stats", color=discord.Color.dark_blue())
         embed.set_thumbnail(url=iconLink)
         embed.set_author(name=summonerName, icon_url=iconLink)
         embed.add_field(name="Games Played", value=f"{gameCount}")
         embed.add_field(name="Win Rate", value=f"{round(playerStats['win'] / gameCount, 2) * 100}")
-        embed.add_field(name="\u200B", value="\u200B")
+        embed.add_field(name="Unique Champions", value=f"{len(champions.keys())}")
 
         embed.add_field(name="Damage Per Gold", value=f"{round(playerStats['totalDamageDealtToChampions'] / playerStats['goldEarned'], 2)}", inline=True)
         embed.add_field(name="Damage Per Minute", value=f"{round(playerStats['totalDamageDealtToChampions'] / totalGameTime, 2)}", inline=True )
@@ -202,13 +206,10 @@ class InHouse(commands.Cog):
         embed.add_field(name="Gold Diff at 10 (experimental)", value=f"{round((goldDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
         embed.add_field(name="CS Diff at 10 (experimental)", value=f"{round((csDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
 
-        # embed.add_field(name="\u200B", value="\u200B")
 
         embed.add_field(name="XP Diff at 20 (experimental)", value=f"{round(((xpDiffs['0-10'] * 10 ) + (xpDiffs['10-20'] * 10 )) / gameCount, 2)}", inline=True)
         embed.add_field(name="Gold Diff at 20 (experimental)", value=f"{round(((goldDiffs['0-10'] * 10) + (goldDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
         embed.add_field(name="CS Diff at 20 (experimental)", value=f"{round(((csDiffs['0-10'] * 10) + (csDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
-
-        # embed.add_field(name="\u200B", value="\u200B")
 
         return embed
 
@@ -239,9 +240,7 @@ class InHouse(commands.Cog):
                 cs = Counter(timelineTarget["creepsPerMinDeltas"])
                 gold = Counter(timelineTarget["goldPerMinDeltas"])
 
-                xpEnemy = Counter(champStats['timeline']["xpPerMinDeltas"])
-
-                xp.subtract(xpEnemy)
+                xp.subtract(Counter(champStats['timeline']["xpPerMinDeltas"]))
                 cs.subtract(Counter(champStats['timeline']["creepsPerMinDeltas"]))
                 gold.subtract(Counter(champStats['timeline']["goldPerMinDeltas"]))
 
@@ -253,66 +252,73 @@ class InHouse(commands.Cog):
 
 
     async def calculateGeneralWinStats(self, collection, highest):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        winDict = {}
-        for key in playersData:
-            winDict[key] = round(playersData[key]['win'] / playersData[key]['totalGames'], 2) * 100
-        sortedDict = sorted(winDict.items(), key=operator.itemgetter(1), reverse=highest)
+        sortedDict = await self.generateLeaderboardDict(collection, 'averagePercent', highest, 'win', 'totalGames')
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
-        return self.generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players", f"Out of {len(winDict.keys())} players, these players have the {lbName} winrate")
+        return self.generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players", f"Out of {len(sortedDict)} players, these players have the {lbName} winrate")
 
     async def calculateGeneralDPMStats(self, collection):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        DPMDict = {}
-        for key in playersData:
-            DPMDict[key] = round(playersData[key]['totalDamageDealtToChampions'] / (playersData[key]['totalGameTime'] / 60), 2)
-        sortedDict = sorted(DPMDict.items(), key=operator.itemgetter(1), reverse=True)
+        sortedDict = await self.generateLeaderboardDict(collection, 'averageGameTime', True, 'totalDamageDealtToChampions', 'totalGameTime')
         return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPM players", "DPM is a statistic that calculates your average damage per minute")
 
     async def calculateGeneralDPGStats(self, collection):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        DPGDict = {}
-        for key in playersData:
-            DPGDict[key] = round(playersData[key]['totalDamageDealtToChampions'] / playersData[key]['goldEarned'], 2)
-        sortedDict = sorted(DPGDict.items(), key=operator.itemgetter(1), reverse=True)
+        sortedDict = await self.generateLeaderboardDict(collection, 'average', True, 'totalDamageDealtToChampions', 'goldEarned')
         return self.generateLeaderboardEmbed(sortedDict, "Top 5 DPG players", "DPG is a statistic that shows how well a given player uses the gold they are given")
 
     async def calculateGeneralCSPMStats(self, collection):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        CSPMDict = {}
-        for key in playersData:
-            CSPMDict[key] = round((playersData[key]['totalMinionsKilled'] + playersData[key]['neutralMinionsKilled']) / (playersData[key]['totalGameTime'] / 60), 2)
-        sortedDict = sorted(CSPMDict.items(), key=operator.itemgetter(1), reverse=True)
+        sortedDict = await self.generateLeaderboardDict(collection, 'multiaddaverageGameTime', True, 'totalMinionsKilled', 'neutralMinionsKilled', 'totalGameTime')
         return self.generateLeaderboardEmbed(sortedDict, "Top 5 CS/M players", "Just CS per Min")
 
     async def calculateGeneralKDAStats(self, collection, type):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        KDADict = {}
-        for key in playersData:
-            KDADict[key] = round(playersData[key][type], 2)
-        sortedDict = sorted(KDADict.items(), key=operator.itemgetter(1), reverse=True)
+        sortedDict = await self.generateLeaderboardDict(collection, 'single', True, type)
         return self.generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players", f"Highest total {type} count in the league")
 
     async def calculateGeneralVisionScoreStats(self, collection, highest):
-        playersData = await self.aggregateStatsForEveryone(collection)
-        KDADict = {}
-        for key in playersData:
-            KDADict[key] = round(playersData[key]['visionScore'] / playersData[key]['totalGames'], 2)
-        sortedDict = sorted(KDADict.items(), key=operator.itemgetter(1), reverse=highest)
+        sortedDict = await self.generateLeaderboardDict(collection, 'average', highest, 'visionScore', 'totalGames')
         lbName = "Top"
         if not highest:
             lbName = "Bottom"
         return self.generateLeaderboardEmbed(sortedDict, f"{lbName} 5 Average Vision Score players", f"Cool Stats")
 
     async def calculateGeneralAverageKDAStats(self, collection, type):
+        sortedDict = await self.generateLeaderboardDict(collection, 'average', True, type, 'totalGames')
+        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", f"Highest average {type} count in the league")
+
+    async def calculateUniqueChampionStats(self, collection, highest):
+        playerChampionDict = {}
+        for document in collection.find():
+            for championId in document['gameData'].keys():
+                if document['gameData'][championId] not in playerChampionDict:
+                    playerChampionDict[document['gameData'][championId]] = set()
+                playerChampionDict[document['gameData'][championId]].add(int(championId))
+
+        uniques = {}
+        for key in playerChampionDict:
+            uniques[key] = len(playerChampionDict[key])
+        sortedDict = sorted(uniques.items(), key=operator.itemgetter(1), reverse=highest)
+        lbName = "Top"
+        if not highest:
+            lbName = "Bottom"
+        return self.generateLeaderboardEmbed(sortedDict, f"{lbName} 5 players by unique champions ", f"Unique champions played in inhouse Matches")
+
+    async def generateLeaderboardDict(self, collection, type, sortDecending, *argv):
         playersData = await self.aggregateStatsForEveryone(collection)
         AVGKDADict = {}
         for key in playersData:
-            AVGKDADict[key] = round(playersData[key][type] / playersData[key]['totalGames'], 2)
-        sortedDict = sorted(AVGKDADict.items(), key=operator.itemgetter(1), reverse=True)
-        return self.generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", f"Highest average {type} count in the league")
+            if playersData[key]['totalGames'] >= minRequiredGames:
+                if type == "average":
+                    AVGKDADict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2)
+                elif type == "averageGameTime":
+                    AVGKDADict[key] = round(playersData[key][argv[0]] / (playersData[key][argv[1]] / 60), 2)
+                elif type == "averagePercent":
+                    AVGKDADict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2) * 100
+                elif type == "single":
+                    AVGKDADict[key] = round(playersData[key][argv[0]], 2)
+                elif type == "multiaddaverageGameTime":
+                    AVGKDADict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]] / 60), 2)
+
+        return sorted(AVGKDADict.items(), key=operator.itemgetter(1), reverse=sortDecending)
 
     def generateLeaderboardEmbed(self, sortedDict, title, subtitle):
         embed = discord.Embed(title=title, description=subtitle, color=discord.Color.dark_blue())
@@ -341,14 +347,11 @@ class InHouse(commands.Cog):
             for player in matchData['participants']:
                 name = document['gameData'][str(player["championId"])]
                 stats = Counter(player["stats"])
-                # timeline = Counter(player["timeline"])
                 if name not in playersData:
                     playersData[name] = Counter({})
                     playersData[name]['totalGameTime'] = 0
                     playersData[name]['totalGames'] = 0
-                    # playersData[name]['timeline'] = {}
                 playersData[name] = playersData[name] + stats
-                # playersData[name]['timeline'] = playersData[name]['timeline'] + timeline
                 playersData[name]['totalGameTime'] += matchData["gameDuration"]
                 playersData[name]['totalGames'] += 1
 
