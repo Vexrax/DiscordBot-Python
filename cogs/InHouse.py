@@ -2,16 +2,12 @@ import os
 
 from discord.ext import commands
 from pymongo import MongoClient
-import requests
 import discord
 import utils.Util as botUtil
 import utils.CacheControl
 import operator
 import matplotlib.pyplot as plt
 import io
-
-
-from collections import Counter
 
 import json
 
@@ -64,43 +60,40 @@ class InHouse(commands.Cog):
         #     await ctx.send("Maintenance mode enabled, command blocked")
         #     return
 
-        db = self.mongoClient["Skynet"]
-        collection = db["InHouses"]
-
         if option.lower() == 'win':
-            embed = await self.calculateGeneralWinStats(collection, True)
+            embed = await self.calculateGeneralWinStats(True)
         elif option.lower() == 'loss':
-            embed = await self.calculateGeneralWinStats(collection, False)
+            embed = await self.calculateGeneralWinStats(False)
         elif option.lower() == 'dpm':
-            embed = await self.calculateGeneralDPMStats(collection)
+            embed = await self.calculateGeneralDPMStats()
         elif option.lower() == 'dpg':
-            embed = await self.calculateGeneralDPGStats(collection)
+            embed = await self.calculateGeneralDPGStats()
         elif option.lower() == 'cspm':
-            embed = await self.calculateGeneralCSPMStats(collection)
+            embed = await self.calculateGeneralCSPMStats()
         elif option.lower() == 'kills':
-            embed = await self.calculateGeneralKDAStats(collection, 'kills')
+            embed = await self.calculateGeneralKDAStats('kills')
         elif option.lower() == 'deaths':
-            embed = await self.calculateGeneralKDAStats(collection, 'deaths')
+            embed = await self.calculateGeneralKDAStats('deaths')
         elif option.lower() == 'assists':
-            embed = await self.calculateGeneralKDAStats(collection, 'assists')
+            embed = await self.calculateGeneralKDAStats('assists')
         elif option.lower() == 'avgkills':
-            embed = await self.calculateGeneralAverageKDAStats(collection, 'kills')
+            embed = await self.calculateGeneralAverageKDAStats('kills')
         elif option.lower() == 'avgdeaths':
-            embed = await self.calculateGeneralAverageKDAStats(collection, 'deaths')
+            embed = await self.calculateGeneralAverageKDAStats( 'deaths')
         elif option.lower() == 'avgassists':
-            embed = await self.calculateGeneralAverageKDAStats(collection, 'assists')
+            embed = await self.calculateGeneralAverageKDAStats('assists')
         elif option.lower() == 'highestavgvisionscore':
-            embed = await self.calculateGeneralVisionScoreStats(collection, True)
+            embed = await self.calculateGeneralVisionScoreStats(True)
         elif option.lower() == 'lowestavgvisionscore':
-            embed = await self.calculateGeneralVisionScoreStats(collection, False)
+            embed = await self.calculateGeneralVisionScoreStats( False)
         elif option.lower() == 'highestuniquechampions':
-            embed = await self.calculateUniqueChampionStats(collection, True)
+            embed = await self.calculateUniqueChampionStats(True)
         elif option.lower() == 'lowestuniquechampions':
-            embed = await self.calculateUniqueChampionStats(collection, False)
+            embed = await self.calculateUniqueChampionStats(False)
         elif option.lower() == 'lowestkp':
-            embed = await self.calculateAverageKillParticipation(collection, True)
+            embed = await self.calculateAverageKillParticipation(True)
         elif option.lower() == 'highestkp':
-            embed = await self.calculateAverageKillParticipation(collection, False)
+            embed = await self.calculateAverageKillParticipation(False)
         elif option.lower() == 'ban':
             embed = await self.calculateBanStats()
         else:
@@ -158,51 +151,51 @@ class InHouse(commands.Cog):
         playerStats = await self.cacheControl.getStats(summonerName)
         if len(playerStats.keys()) == 0:
             return discord.Embed(title=f"Summoner Not Found", description=f"FYI: Names are case sensitive", color=discord.Color.dark_red())
-        embed = await generateEmbedForPlayerStats(playerStats['gameCount'], playerStats['playerStats'], summonerName, playerStats['totalGameTime'], playerStats['csDiffs'], playerStats['goldDiffs'], playerStats['xpDiffs'], playerStats['champions'], f"{ddragonBaseIcon}{await self.cacheControl.getSummonerIcon(summonerName)}.png")
+        embed = await generateEmbedForPlayerStats(summonerName, playerStats, f"{ddragonBaseIcon}{await self.cacheControl.getSummonerIcon(summonerName)}.png")
         return embed
 
-    async def calculateGeneralWinStats(self, collection, highest):
-        sortedDict = await self.generateLeaderboardDict(collection, 'averagePercent', highest, 'win', 'totalGames')
+    async def calculateGeneralWinStats(self, highest):
+        sortedDict = await self.generateLeaderboardDict('averagePercent', highest, 'win', 'totalGames')
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
         return generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players", f"Out of {len(sortedDict)} players, these players have the {lbName} winrate")
 
-    async def calculateGeneralDPMStats(self, collection):
-        sortedDict = await self.generateLeaderboardDict(collection, 'averageGameTime', True, 'totalDamageDealtToChampions', 'totalGameTime')
+    async def calculateGeneralDPMStats(self):
+        sortedDict = await self.generateLeaderboardDict('averageGameTime', True, 'totalDamageDealtToChampions', 'totalGameTime')
         return generateLeaderboardEmbed(sortedDict, "Top 5 DPM players", "DPM is a statistic that calculates your average damage per minute")
 
-    async def calculateGeneralDPGStats(self, collection):
-        sortedDict = await self.generateLeaderboardDict(collection, 'average', True, 'totalDamageDealtToChampions', 'goldEarned')
+    async def calculateGeneralDPGStats(self):
+        sortedDict = await self.generateLeaderboardDict('average', True, 'totalDamageDealtToChampions', 'goldEarned')
         return generateLeaderboardEmbed(sortedDict, "Top 5 DPG players", "DPG is a statistic that shows how well a given player uses the gold they are given")
 
-    async def calculateGeneralCSPMStats(self, collection):
-        sortedDict = await self.generateLeaderboardDict(collection, 'multiaddaverageGameTime', True, 'totalMinionsKilled', 'neutralMinionsKilled', 'totalGameTime')
+    async def calculateGeneralCSPMStats(self):
+        sortedDict = await self.generateLeaderboardDict('multiaddaverageGameTime', True, 'totalMinionsKilled', 'neutralMinionsKilled', 'totalGameTime')
         return generateLeaderboardEmbed(sortedDict, "Top 5 CS/M players", "Just CS per Min")
 
-    async def calculateGeneralKDAStats(self, collection, type):
-        sortedDict = await self.generateLeaderboardDict(collection, 'single', True, type)
+    async def calculateGeneralKDAStats(self, type):
+        sortedDict = await self.generateLeaderboardDict('single', True, type)
         return generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players", f"Highest total {type} count in the league")
 
-    async def calculateAverageKillParticipation(self, collection, highest):
-        sortedDict = await self.generateLeaderboardDict(collection, 'summedAvg', highest, 'kills', 'assists', 'totalKillsAvailable')
+    async def calculateAverageKillParticipation(self, highest):
+        sortedDict = await self.generateLeaderboardDict('summedAvg', highest, 'kills', 'assists', 'totalKillsAvailable')
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
         return generateLeaderboardEmbed(sortedDict, f"{lbName} KP players", f"Highest total Kill Participation count in the league")
 
-    async def calculateGeneralVisionScoreStats(self, collection, highest):
-        sortedDict = await self.generateLeaderboardDict(collection, 'average', highest, 'visionScore', 'totalGames')
+    async def calculateGeneralVisionScoreStats(self, highest):
+        sortedDict = await self.generateLeaderboardDict('average', highest, 'visionScore', 'totalGames')
         lbName = "Top"
         if not highest:
             lbName = "Bottom"
         return generateLeaderboardEmbed(sortedDict, f"{lbName} 5 Average Vision Score players", f"Cool Stats")
 
-    async def calculateGeneralAverageKDAStats(self, collection, type):
-        sortedDict = await self.generateLeaderboardDict(collection, 'average', True, type, 'totalGames')
+    async def calculateGeneralAverageKDAStats(self, type):
+        sortedDict = await self.generateLeaderboardDict('average', True, type, 'totalGames')
         return generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", f"Highest average {type} count in the league")
 
-    async def calculateUniqueChampionStats(self, collection, highest):
+    async def calculateUniqueChampionStats(self, highest):
         uniques = await self.cacheControl.getStats('unique')
         sortedDict = sorted(uniques.items(), key=operator.itemgetter(1), reverse=highest)
         lbName = "Top"
@@ -215,26 +208,26 @@ class InHouse(commands.Cog):
         sortedDict = sorted(data.items(), key=operator.itemgetter(1), reverse=True)
         return generateLeaderboardEmbed(sortedDict, "Highest Ban Champions", "These are the most banned champions")
 
-    async def generateLeaderboardDict(self, collection, type, sortDecending, *argv):
+    async def generateLeaderboardDict(self, type, sortDecending, *argv):
         playersData = await self.cacheControl.getStats('general')
-        AVGKDADict = {}
+        LeaderBoardDict = {}
         for key in playersData:
             if playersData[key]['totalGames'] >= minRequiredGames:
                 if type == "average":
-                    AVGKDADict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2)
+                    LeaderBoardDict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2)
                 elif type == "averageGameTime":
-                    AVGKDADict[key] = round(playersData[key][argv[0]] / (playersData[key][argv[1]] / 60), 2)
+                    LeaderBoardDict[key] = round(playersData[key][argv[0]] / (playersData[key][argv[1]] / 60), 2)
                 elif type == "averagePercent":
-                    AVGKDADict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2) * 100
+                    LeaderBoardDict[key] = round(playersData[key][argv[0]] / playersData[key][argv[1]], 2) * 100
                 elif type == "single":
-                    AVGKDADict[key] = round(playersData[key][argv[0]], 2)
+                    LeaderBoardDict[key] = round(playersData[key][argv[0]], 2)
                 elif type == "multiaddaverageGameTime":
-                    AVGKDADict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]] / 60), 2)
+                    LeaderBoardDict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]] / 60), 2)
                 elif type == "summedAvg":
-                    AVGKDADict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]]), 2)
+                    LeaderBoardDict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]]), 2)
 
 
-        return sorted(AVGKDADict.items(), key=operator.itemgetter(1), reverse=sortDecending)
+        return sorted(LeaderBoardDict.items(), key=operator.itemgetter(1), reverse=sortDecending)
 
     async def generateLeaderboardImage(self, sortedDict, ctx):
         channel = discord.utils.get(ctx.guild.channels, name='skynet-logs')

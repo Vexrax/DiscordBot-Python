@@ -25,7 +25,16 @@ def generateLeaderboardEmbed(sortedDict, title, subtitle):
     return embed
 
 
-async def generateEmbedForPlayerStats(gameCount, playerStats, summonerName, totalGameTime, csDiffs, goldDiffs, xpDiffs, champions, iconLink):
+async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
+
+    gameCount = playerDataDict["gameCount"]
+    playerStats = playerDataDict["playerStats"]
+    totalGameTime = playerDataDict["totalGameTime"]
+    csDiffs = playerDataDict["csDiffs"]
+    goldDiffs = playerDataDict["goldDiffs"]
+    xpDiffs = playerDataDict["xpDiffs"]
+    champions = playerDataDict["champions"]
+
     embed = discord.Embed(title=f"{summonerName}'s InHouse Stats", description=f"Cool Stats", color=discord.Color.dark_blue())
     embed.set_thumbnail(url=iconLink)
     embed.set_author(name=summonerName, icon_url=iconLink)
@@ -49,12 +58,12 @@ async def generateEmbedForPlayerStats(gameCount, playerStats, summonerName, tota
     embed.add_field(name="Average Vision Score", value=f"{round((playerStats['visionScore']) / gameCount, 2)}", inline=True)
     embed.add_field(name="Vision Score Per Min", value=f"{round((playerStats['visionScore']) / totalGameTime, 2)}", inline=True)
 
-    embed.add_field(name="XP Diff at 10 (experimental)", value=f"{round((xpDiffs['0-10'] * 10 )/ gameCount, 2)}", inline=True)
-    embed.add_field(name="Gold Diff at 10 (experimental)", value=f"{round((goldDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
-    embed.add_field(name="CS Diff at 10 (experimental)", value=f"{round((csDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
+    embed.add_field(name="XP Diff at 10", value=f"{round((xpDiffs['0-10'] * 10 )/ gameCount, 2)}", inline=True)
+    embed.add_field(name="Gold Diff at 10", value=f"{round((goldDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
+    embed.add_field(name="CS Diff at 10", value=f"{round((csDiffs['0-10'] * 10) / gameCount, 2)}", inline=True)
 
-    embed.add_field(name="XP Diff at 20 (experimental)", value=f"{round(((xpDiffs['0-10'] * 10 ) + (xpDiffs['10-20'] * 10 )) / gameCount, 2)}", inline=True)
-    embed.add_field(name="Gold Diff at 20 (experimental)", value=f"{round(((goldDiffs['0-10'] * 10) + (goldDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
-    embed.add_field(name="CS Diff at 20 (experimental)", value=f"{round(((csDiffs['0-10'] * 10) + (csDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
+    embed.add_field(name="XP Diff at 20", value=f"{round(((xpDiffs['0-10'] * 10 ) + (xpDiffs['10-20'] * 10 )) / gameCount, 2)}", inline=True)
+    embed.add_field(name="Gold Diff at 20", value=f"{round(((goldDiffs['0-10'] * 10) + (goldDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
+    embed.add_field(name="CS Diff at 20", value=f"{round(((csDiffs['0-10'] * 10) + (csDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
 
     return embed

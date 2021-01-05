@@ -94,6 +94,21 @@ class Election(commands.Cog):
             adminList += mem.name + '\n'
         await ctx.send(f"{adminList}")
 
+    # TODO DELETE THIS AFTER WE USE IT FOR THE ADMIN PURGE
+    # @commands.command()
+    async def removeAllAdmins(self, ctx):
+        AdminsRemoved = ""
+        if(botUtil.isVexrax(ctx.message.author.id)):
+            await ctx.send(f"Removing all admins")
+            adminRole = discord.utils.get(ctx.guild.roles, name=adminRoleName)
+            for user in adminRole.members:
+                if not(botUtil.isSkynet(user.id)):
+                    await user.remove_roles(adminRole)
+                    AdminsRemoved += user.name + '\n'
+        await ctx.send(f"Admins Removed:\n {AdminsRemoved}")
+        await ctx.send(f"https://media1.tenor.com/images/0336cec5f3c54488c9a8d4d61553daeb/tenor.gif?itemid=13009021")
+        return
+
     async def canUseCommand(self, ctx):
 
         # if not botUtil.isVexrax(ctx.message.author.id):
