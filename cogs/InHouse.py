@@ -96,6 +96,8 @@ class InHouse(commands.Cog):
             embed = await self.calculateAverageKillParticipation(False)
         elif option.lower() == 'ban':
             embed = await self.calculateBanStats()
+        elif option.lower() == 'pick':
+            embed = await self.calculatePickStats()
         else:
             embed = await self.generatePlayerStats(option)
 
@@ -207,6 +209,11 @@ class InHouse(commands.Cog):
         data = await self.cacheControl.getStats('ban')
         sortedDict = sorted(data.items(), key=operator.itemgetter(1), reverse=True)
         return generateLeaderboardEmbed(sortedDict, "Highest Ban Champions", "These are the most banned champions")
+
+    async def calculatePickStats(self):
+        data = await self.cacheControl.getStats('pick')
+        sortedDict = sorted(data.items(), key=operator.itemgetter(1), reverse=True)
+        return generateLeaderboardEmbed(sortedDict, "Highest Pick Champions", "These are the most picked champions")
 
     async def generateLeaderboardDict(self, type, sortDecending, *argv):
         playersData = await self.cacheControl.getStats('general')

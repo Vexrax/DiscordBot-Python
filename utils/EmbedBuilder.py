@@ -66,4 +66,19 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
     embed.add_field(name="Gold Diff at 20", value=f"{round(((goldDiffs['0-10'] * 10) + (goldDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
     embed.add_field(name="CS Diff at 20", value=f"{round(((csDiffs['0-10'] * 10) + (csDiffs['10-20'] * 10)) / gameCount, 2)}", inline=True)
 
+    championValueStrs = ["", "", ""]
+    champsPerColums = int(len(champions.keys()) / 3) + 1
+    currentColumn = 0
+    i = 0
+    for key in champions:
+        championValueStrs[currentColumn] += f"{key} ({champions[key]['games']}):\n*`{round((champions[key]['win'] / champions[key]['games'])*100,1)}%` WR*\n"
+        i += 1
+        if not i < champsPerColums:
+            i = 0
+            currentColumn += 1
+
+    embed.add_field(name="Champions Played:", value=f"{championValueStrs[0]}", inline=True)
+    embed.add_field(name="\u200B", value=f"{championValueStrs[1]}", inline=True)
+    embed.add_field(name="\u200B", value=f"{championValueStrs[2]}", inline=True)
+
     return embed

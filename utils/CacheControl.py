@@ -42,9 +42,12 @@ class CacheControl:
                 stats = await self.aggregateStatsForEveryone()
             elif type == 'unique':
                 stats = await self.aggregateUniqueChampionStats()
+            elif type == 'pick':
+                stats = await self.aggregatePickStats()
             else:
                 stats = await self.aggregateStatsForPlayer(type)
-            collection.replace_one({'id': type}, {'id': type, 'stats': stats, 'creationTime': time.time()})
+            collection.delete_one({'id': type})
+            collection.insert_one({'id': type, 'stats': stats, 'creationTime': time.time()})
             return stats
 
     async def getEncryptedSummonerId(self, summonerName):
@@ -151,6 +154,8 @@ class CacheControl:
 
         gameCount = 0
         totalGameTime = 0
+        championsInfo = {}
+
         for matchId in gameIds:
             matchData = await self.getMatchReport(matchId)
             statsForMatch = Counter(self.findStatsFromParticipantList(matchData['participants'], gameIds[matchId]))
@@ -160,6 +165,10 @@ class CacheControl:
             xpDiffs.update(diffsForMatch["xpPerMinDeltas"])
             csDiffs.update(diffsForMatch["creepsPerMinDeltas"])
             playerStats = statsForMatch + playerStats
+
+            if gameIds[matchId] not in championsInfo:
+                championsInfo[gameIds[matchId]] = Counter({'win': 0, 'games': 0})
+            championsInfo[gameIds[matchId]].update(Counter({'win': statsForMatch['win'], 'games': 1}))
 
             gameCount += 1
             totalGameTime += int(matchData['gameDuration'] / 60)
@@ -171,14 +180,46 @@ class CacheControl:
             'csDiffs': csDiffs,
             'goldDiffs': goldDiffs,
             'xpDiffs': xpDiffs,
-            'champions': Counter(gameIds.values())
+            'champions': self.convertChampionIdsKeysToNames(championsInfo)
         }
+
+    async def aggregatePickStats(self):
+        db = self.mongoClient["Skynet"]
+        collection = db["InHouses"]
+
+        champCountDict = {}
+        championDataDict = {}
+
+        for document in collection.find():
+            for champion in document['gameData'].keys():
+                if str(champion) not in championDataDict:
+                    data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
+                    championDataDict[str(champion)] = data['name']
+                name = championDataDict[str(champion)]
+
+                if name not in champCountDict:
+                    champCountDict[name] = 0
+
+                champCountDict[name] += 1
+
+        return champCountDict
 
     def findStatsFromParticipantList(self, participantList, targetChampion):
         for champStats in participantList:
             if(str(champStats['championId']) == targetChampion):
                 return champStats['stats']
         return {}
+
+    def convertChampionIdsKeysToNames(self, championIdDict):
+        championDataDict = {}
+        returnDict = {}
+        for champion in championIdDict:
+            if str(champion) not in championDataDict:
+                data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
+                championDataDict[str(champion)] = data['name']
+            name = championDataDict[str(champion)]
+            returnDict[name] = championIdDict[champion]
+        return returnDict
 
     def generatePlayerDiffsFromMatch(self, participantList, targetChampion):
         timelineTarget = {}
