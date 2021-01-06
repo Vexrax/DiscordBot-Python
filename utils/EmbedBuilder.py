@@ -71,14 +71,27 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
     currentColumn = 0
     i = 0
     for key in champions:
-        championValueStrs[currentColumn] += f"{key} ({champions[key]['games']}):\n*`{round((champions[key]['win'] / champions[key]['games'])*100,1)}%` WR*\n"
+        wr = round((champions[key]['win'] / champions[key]['games'])*100, 1)
+        championValueStrs[currentColumn] += f"{key} ({champions[key]['games']}):\n```{getWinrateColor(wr)}\n{wr}% WR``` \n"
         i += 1
         if not i < champsPerColums:
             i = 0
             currentColumn += 1
+
+    if(championValueStrs[0] == ""):
+        championValueStrs[0] = "\u200B"
+    if (championValueStrs[1] == ""):
+        championValueStrs[1] = "\u200B"
+    if (championValueStrs[2] == ""):
+        championValueStrs[2] = "\u200B"
 
     embed.add_field(name="Champions Played:", value=f"{championValueStrs[0]}", inline=True)
     embed.add_field(name="\u200B", value=f"{championValueStrs[1]}", inline=True)
     embed.add_field(name="\u200B", value=f"{championValueStrs[2]}", inline=True)
 
     return embed
+
+def getWinrateColor(winrate):
+    if winrate > 60:
+        return "yaml"
+    return ""

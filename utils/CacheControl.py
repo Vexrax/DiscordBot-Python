@@ -1,13 +1,14 @@
 import os
 import time
 from collections import Counter
-
+import re
 from pymongo import MongoClient
 import requests
 
 riotAPIBase = "https://na1.api.riotgames.com"
 APIKEY = '' #DEV API key expires daily
 cdragonChampionBase = f" https://cdn.communitydragon.org/10.25.1/champion"
+regex = re.compile('[^a-zA-Z]')
 
 '''
 Interacts with the MONGO Database and the RIOT api. Decides wether to go to the DB for data or to RIOT for data (Kinda a cache but not really)
@@ -39,7 +40,7 @@ class CacheControl:
             if type == 'general':
                 stats = await self.aggregateStatsForEveryone()
             elif type == 'ban':
-                stats = await self.aggregateStatsForEveryone()
+                stats = await self.aggregateBanStats()
             elif type == 'unique':
                 stats = await self.aggregateUniqueChampionStats()
             elif type == 'pick':
@@ -195,7 +196,7 @@ class CacheControl:
                 if str(champion) not in championDataDict:
                     data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
                     championDataDict[str(champion)] = data['name']
-                name = championDataDict[str(champion)]
+                name = regex.sub('', championDataDict[str(champion)])
 
                 if name not in champCountDict:
                     champCountDict[name] = 0
@@ -217,7 +218,7 @@ class CacheControl:
             if str(champion) not in championDataDict:
                 data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
                 championDataDict[str(champion)] = data['name']
-            name = championDataDict[str(champion)]
+            name = regex.sub('', championDataDict[str(champion)])
             returnDict[name] = championIdDict[champion]
         return returnDict
 

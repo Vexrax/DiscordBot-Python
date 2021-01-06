@@ -8,6 +8,7 @@ import utils.CacheControl
 import operator
 import matplotlib.pyplot as plt
 import io
+from collections import Counter
 
 import json
 
@@ -34,8 +35,8 @@ class InHouse(commands.Cog):
     async def inHouseHelp(self, ctx):
         embed = discord.Embed(title="In House Commands", description="Commands for the inhouse bot", color=discord.Color.dark_teal())
         embed.add_field(name=f"//leaderboard", value=f"Options: (Required)\nwin\nloss\ndpm\ndpg\nhighestUniqueChampions\nlowestUniqueChampions\n")
-        embed.add_field(name=f"\u200B", value=f"Options:\ncspm\nkills\ndeaths\nassists")
-        embed.add_field(name=f"\u200B", value=f"Options:\navgkills\navgdeaths\navgassists\nhighestavgvisionscore\nlowestavgvisionscore")
+        embed.add_field(name=f"\u200B", value=f"Options:\ncspm\nkills\ndeaths\nassists\nlowestkp\nhighestkp\npresence")
+        embed.add_field(name=f"\u200B", value=f"Options:\navgkills\navgdeaths\navgassists\nhighestavgvisionscore\nlowestavgvisionscore\npick\nban")
 
 
         embed.add_field(name=f"//stats", value=f"Options:\nSummoner Name (Case sensitive)")
@@ -57,7 +58,7 @@ class InHouse(commands.Cog):
     async def calculateInHouseStats(self, ctx, option):
 
         # if not botUtil.isVexrax(ctx.message.author.id):
-        #     await ctx.send("Maintenance mode enabled, command blocked")
+        #     await ctx.send("Maintenance mode enabled, Database is dead")
         #     return
 
         if option.lower() == 'win':
@@ -90,14 +91,16 @@ class InHouse(commands.Cog):
             embed = await self.calculateUniqueChampionStats(True)
         elif option.lower() == 'lowestuniquechampions':
             embed = await self.calculateUniqueChampionStats(False)
-        elif option.lower() == 'lowestkp':
-            embed = await self.calculateAverageKillParticipation(True)
         elif option.lower() == 'highestkp':
+            embed = await self.calculateAverageKillParticipation(True)
+        elif option.lower() == 'lowestkp':
             embed = await self.calculateAverageKillParticipation(False)
         elif option.lower() == 'ban':
             embed = await self.calculateBanStats()
         elif option.lower() == 'pick':
             embed = await self.calculatePickStats()
+        elif option.lower() == 'presence':
+            embed = await self.calculatePresence()
         else:
             embed = await self.generatePlayerStats(option)
 
@@ -107,7 +110,7 @@ class InHouse(commands.Cog):
     @commands.command()
     async def addMatchForInHouseStats(self, ctx, username):
 
-        if not botUtil.isVexrax(ctx.message.author.id) and not ctx.message.author.id == 105128588411437056:
+        if not botUtil.isVexrax(ctx.message.author.id):
             await ctx.send("Due to rate limits/API keys please get vexrax to run this command")
             return
         try:
@@ -184,7 +187,7 @@ class InHouse(commands.Cog):
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} KP players", f"Highest total Kill Participation count in the league")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} KP players", f"Kill Participation count in the league")
 
     async def calculateGeneralVisionScoreStats(self, highest):
         sortedDict = await self.generateLeaderboardDict('average', highest, 'visionScore', 'totalGames')
@@ -214,6 +217,19 @@ class InHouse(commands.Cog):
         data = await self.cacheControl.getStats('pick')
         sortedDict = sorted(data.items(), key=operator.itemgetter(1), reverse=True)
         return generateLeaderboardEmbed(sortedDict, "Highest Pick Champions", "These are the most picked champions")
+
+    async def calculatePresence(self):
+        bans = Counter(await self.cacheControl.getStats('ban'))
+        picks = Counter(await self.cacheControl.getStats('pick'))
+        presence = bans + picks
+        db = self.mongoClient["Skynet"]
+        collection = db["InHouses"]
+        matchCount = collection.find().count()
+        for key in presence:
+            presence[key] = round(presence[key] / matchCount,2)
+        sortedDict = sorted(presence.items(), key=operator.itemgetter(1), reverse=True)
+        return generateLeaderboardEmbed(sortedDict, "Highest Presence Champions", "These are the champions that were picked or banned the most")
+
 
     async def generateLeaderboardDict(self, type, sortDecending, *argv):
         playersData = await self.cacheControl.getStats('general')
