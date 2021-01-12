@@ -6,7 +6,7 @@ from pymongo import MongoClient
 import requests
 
 riotAPIBase = "https://na1.api.riotgames.com"
-APIKEY = '' #DEV API key expires daily
+APIKEY = os.getenv('RIOT') #DEV API key expires daily
 cdragonChampionBase = f" https://cdn.communitydragon.org/10.25.1/champion"
 regex = re.compile('[^a-zA-Z]')
 
@@ -24,7 +24,12 @@ class CacheControl:
         document = collection.find_one({"gameId": matchId})
         if not document is None:
             return document
-        data = requests.get(f'{riotAPIBase}/lol/match/v4/matches/{matchId}?api_key={APIKEY}').json()
+        response = requests.get(f'{riotAPIBase}/lol/match/v4/matches/{matchId}?api_key={APIKEY}')
+        data = response.json()
+
+        if response.status_code != 200:
+            return data
+
         collection.insert_one(data)
         return data
 
@@ -56,7 +61,10 @@ class CacheControl:
         return summonerObj["id"]
 
     async def getSummonerIcon(self, summonerName):
-        summonerObj = requests.get(f'{riotAPIBase}/lol/summoner/v4/summoners/by-name/{summonerName}?api_key={APIKEY}').json()
+        response = requests.get(f'{riotAPIBase}/lol/summoner/v4/summoners/by-name/{summonerName}?api_key={APIKEY}')
+        if response.status_code != 200:
+            return ""
+        summonerObj = response.json()
         return summonerObj["profileIconId"]
 
     async def getLiveMatch(self, encryptedSummonerId):

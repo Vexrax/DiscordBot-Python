@@ -91,6 +91,30 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
 
     return embed
 
+
+async def generateInHouseHelpEmbed(commandList):
+    keyPerRow = int(len(commandList) / 3) + 1
+    currentColumn = 0
+    i = 0
+    strArr = ["Options:\n", "Options:\n", "Options:\n"]
+    for key in commandList:
+        strArr[currentColumn] += f"{key}\n"
+        i += 1
+        if not i < keyPerRow:
+            i = 0
+            currentColumn += 1
+
+    embed = discord.Embed(title="In House Commands", description="Commands for the inhouse bot",
+                          color=discord.Color.dark_teal())
+    embed.add_field(name=f"//leaderboard", value=f"{strArr[0]}")
+    embed.add_field(name=f"\u200B", value=f"{strArr[1]}")
+    embed.add_field(name=f"\u200B", value=f"{strArr[2]}")
+
+    embed.add_field(name=f"//stats", value=f"Options:\nSummoner Name (Case sensitive)")
+    embed.add_field(name=f"\u200B", value=f"\u200B")
+    embed.add_field(name=f"\u200B", value=f"\u200B")
+    return embed
+
 def getWinrateColor(winrate):
     if winrate > 60:
         return "yaml"
