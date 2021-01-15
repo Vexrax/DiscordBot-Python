@@ -27,31 +27,31 @@ class InHouse(commands.Cog):
         self.mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
         self.cacheControl = utils.CacheControl.CacheControl()
         self.commandMap = {
-            'win' : self.calculateGeneralWinStats(True),
-            'loss': self.calculateGeneralWinStats(False),
-            'dpm' : self.calculateGeneralDPMStats(),
-            'dpg' : self.calculateGeneralDPGStats(),
-            'topgpm': self.calculateGeneralGPMStats(True),
-            'botgpm': self.calculateGeneralGPMStats(False),
-            'cspm': self.calculateGeneralCSPMStats(),
-            'kills': self.calculateGeneralKDAStats('kills'),
-            'deaths': self.calculateGeneralKDAStats('deaths'),
-            'assists': self.calculateGeneralKDAStats('assists'),
-            'avgkills': self.calculateGeneralAverageKDAStats('kills'),
-            'avgdeaths': self.calculateGeneralAverageKDAStats('deaths'),
-            'avgassists': self.calculateGeneralAverageKDAStats('assists'),
-            'highestavgvisionscore': self.calculateGeneralVisionScoreStats(True),
-            'lowestavgvisionscore': self.calculateGeneralVisionScoreStats(False),
-            'topvspm': self.calculateVisionScorePerMinute(True),
-            'botvspm': self.calculateVisionScorePerMinute(False),
-            'highestuniquechampions': self.calculateUniqueChampionStats(True),
-            'lowestuniquechampions': self.calculateUniqueChampionStats(False),
-            'highestkp': self.calculateAverageKillParticipation(True),
-            'lowestkp': self.calculateAverageKillParticipation(False),
-            'ban': self.calculateBanStats(),
-            'pick': self.calculatePickStats(),
-            'presence': self.calculatePresence(),
-            'topgames': self.calculateGameCount(),
+            'win': (self.calculateGeneralWinStats, True),
+            'loss': (self.calculateGeneralWinStats, False),
+            'dpm': (self.calculateGeneralDPMStats, None),
+            'dpg': (self.calculateGeneralDPGStats, None),
+            'topgpm': (self.calculateGeneralGPMStats, True),
+            'botgpm': (self.calculateGeneralGPMStats, False),
+            'cspm': (self.calculateGeneralCSPMStats, None),
+            'kills': (self.calculateGeneralKDAStats, 'kills'),
+            'deaths': (self.calculateGeneralKDAStats, 'deaths'),
+            'assists': (self.calculateGeneralKDAStats, 'assists'),
+            'avgkills': (self.calculateGeneralAverageKDAStats, 'kills'),
+            'avgdeaths': (self.calculateGeneralAverageKDAStats, 'deaths'),
+            'avgassists': (self.calculateGeneralAverageKDAStats, 'assists'),
+            'highestavgvisionscore': (self.calculateGeneralVisionScoreStats, True),
+            'lowestavgvisionscore': (self.calculateGeneralVisionScoreStats, False),
+            'topvspm': (self.calculateVisionScorePerMinute, True),
+            'botvspm': (self.calculateVisionScorePerMinute, False),
+            'highestuniquechampions': (self.calculateUniqueChampionStats,True),
+            'lowestuniquechampions': (self.calculateUniqueChampionStats, False),
+            'highestkp': (self.calculateAverageKillParticipation, True),
+            'lowestkp': (self.calculateAverageKillParticipation,False),
+            'ban': (self.calculateBanStats, None),
+            'pick': (self.calculatePickStats, None),
+            'presence': (self.calculatePresence, None),
+            'topgames': (self.calculateGameCount, None),
         }
 
     @commands.Cog.listener()
@@ -72,19 +72,23 @@ class InHouse(commands.Cog):
         #     return
 
         if option.lower() in self.commandMap:
-            embed = await self.commandMap[option.lower()]
+            if self.commandMap[option.lower()][1] is None:
+                embed = await self.commandMap[option.lower()][0]()
+            else:
+                embed = await self.commandMap[option.lower()][0](self.commandMap[option.lower()][1])
         else:
             embed = await self.generatePlayerStats(option)
 
         await ctx.send(embed=embed)
         return
 
+    @commands.has_role('Admin')
     @commands.command()
     async def addMatchForInHouseStats(self, ctx, username):
 
-        if not botUtil.isVexrax(ctx.message.author.id):
-            await ctx.send("Due to rate limits/API keys please get vexrax to run this command")
-            return
+        # if not botUtil.isVexrax(ctx.message.author.id):
+        #     await ctx.send("Due to rate limits/API keys please get vexrax to run this command")
+        #     return
 
         try:
             encryptedId = await self.cacheControl.getEncryptedSummonerId(username)
@@ -101,6 +105,7 @@ class InHouse(commands.Cog):
             await ctx.send(f"Something went wrong {e} ")
             return
 
+    # @commands.command()
     async def manualAddMatch(self, ctx):
         f = open("C:\\Users\\Joshua\\Documents\\Repos\\DiscordBot-Python\\cogs\\temp.json", "r")
         data = json.load(f)
