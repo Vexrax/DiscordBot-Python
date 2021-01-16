@@ -3,5 +3,4 @@ discord.py
 pymongo
 youtube_dl
 requests
-matplotlib
 pytz

@@ -3,7 +3,6 @@ import os
 from discord.ext import commands
 from pymongo import MongoClient
 import discord
-import utils.Util as botUtil
 import utils.CacheControl
 import operator
 from collections import Counter
