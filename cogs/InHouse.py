@@ -133,7 +133,8 @@ class InHouse(commands.Cog):
         playerStats = await self.cacheControl.getStats(summonerName)
         if len(playerStats.keys()) == 0:
             return discord.Embed(title=f"Summoner Not Found", description=f"FYI: Names are case sensitive", color=discord.Color.dark_red())
-        embed = await generateEmbedForPlayerStats(summonerName, playerStats, f"{ddragonBaseIcon}{await self.cacheControl.getSummonerIcon(summonerName)}.png")
+        playerIconId = await self.cacheControl.getSummonerIcon(summonerName)
+        embed = await generateEmbedForPlayerStats(summonerName, playerStats, f"{ddragonBaseIcon}{playerIconId}.png")
         return embed
 
     async def calculateGeneralWinStats(self, highest):
