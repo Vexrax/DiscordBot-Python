@@ -47,7 +47,7 @@ class InHouse(commands.Cog):
             'highestuniquechampions': (self.calculateUniqueChampionStats,True),
             'lowestuniquechampions': (self.calculateUniqueChampionStats, False),
             'highestkp': (self.calculateAverageKillParticipation, True),
-            'lowestkp': (self.calculateAverageKillParticipation,False),
+            'lowestkp': (self.calculateAverageKillParticipation, False),
             'ban': (self.calculateBanStats, None),
             'pick': (self.calculatePickStats, None),
             'presence': (self.calculatePresence, None),
