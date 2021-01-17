@@ -51,6 +51,9 @@ class InHouse(commands.Cog):
             'pick': (self.calculatePickStats, None),
             'presence': (self.calculatePresence, None),
             'topgames': (self.calculateGameCount, None),
+            'topgoldshare': (self.calculateGoldShareStats, True),
+            'botgoldshare': (self.calculateGoldShareStats, False),
+
         }
 
     @commands.Cog.listener()
@@ -213,6 +216,14 @@ class InHouse(commands.Cog):
         data = await self.cacheControl.getStats('pick')
         sortedDict = sorted(data.items(), key=operator.itemgetter(1), reverse=True)
         return generateLeaderboardEmbed(sortedDict, "Highest Pick Champions", "These are the most picked champions")
+
+    async def calculateGoldShareStats(self, highest):
+        sortedDict = await self.generateLeaderboardDict('averagePercent', highest, 'goldEarned', 'totalGoldAvailable')
+        lbName = "Top 5"
+        if not highest:
+            lbName = "Bottom 5"
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players", f"This stat tells us what your average % goldshare is")
+
 
     async def calculatePresence(self):
         bans = Counter(await self.cacheControl.getStats('ban'))

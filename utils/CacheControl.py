@@ -114,8 +114,7 @@ class CacheControl:
         playersData = {}
         for document in collection.find():
             matchData = await self.getMatchReport(document["matchId"])
-            totalBlueKillsInMatch = 0
-            totalRedKillsInMatch = 0
+            totalBlueKillsInMatch, totalRedKillsInMatch, totalBlueGold, totalRedGold, = 0, 0, 0, 0
             for player in matchData['participants']:
                 name = document['gameData'][str(player["championId"])]
                 stats = Counter(player["stats"])
@@ -130,16 +129,22 @@ class CacheControl:
 
                 if player['participantId'] <= 5:
                     totalBlueKillsInMatch += stats['kills']
+                    totalBlueGold += stats['goldEarned']
                 else:
                     totalRedKillsInMatch += stats['kills']
+                    totalRedGold += stats['goldEarned']
+
 
             # Needs to happen after all the paricipants have been run thru
             for player in matchData['participants']:
                 name = document['gameData'][str(player["championId"])]
                 if player['participantId'] <= 5:
                     playersData[name]['totalKillsAvailable'] += totalBlueKillsInMatch
+                    playersData[name]['totalGoldAvailable'] += totalBlueGold
                 else:
                     playersData[name]['totalKillsAvailable'] += totalRedKillsInMatch
+                    playersData[name]['totalGoldAvailable'] += totalRedGold
+
 
         return playersData
 
