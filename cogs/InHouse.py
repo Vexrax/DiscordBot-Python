@@ -100,7 +100,8 @@ class InHouse(commands.Cog):
                 participantMap[str(summoner['championId'])] = str(summoner['summonerName'])
             db = self.mongoClient["Skynet"]
             collection = db["InHouses"]
-            finalDict = {'matchId': summonerObj['gameId'], "gameData": participantMap}
+            addedBy = ctx.message.author.name + ctx.message.author.discriminator
+            finalDict = {'matchId': summonerObj['gameId'], 'addedBy': addedBy, "gameData": participantMap}
             collection.insert_one(finalDict)
             await ctx.send(f"Added Match {summonerObj['gameId']} to the match database")
         except Exception as e:
