@@ -93,13 +93,37 @@ class InHouse(commands.Cog):
         #     return
 
         try:
+
+            db = self.mongoClient["Skynet"]
+            collection = db["InHouses"]
+
             encryptedId = await self.cacheControl.getEncryptedSummonerId(username)
+
+            if encryptedId == "":
+                await ctx.send(f"Encrypted Summoner Id retured bad error code, check if API key is valid")
+                return
             summonerObj = await self.cacheControl.getLiveMatch(encryptedId)
+            if summonerObj is None:
+                await ctx.send(f"{username} is not in a match")
+                return
+
+            # Logic for checking if its a valid inhouse
+            if summonerObj["gameType"] != "CUSTOM_GAME" or summonerObj["gameMode"] != "CLASSIC":
+                await ctx.send(f"{summonerObj['gameId']} is not a correct custom match, not adding to DB")
+                return
+            if len(summonerObj["participants"]) != 10:
+                await ctx.send(f"{summonerObj['gameId']} does not have enough players to be added to the inhouse stats, amount of players {len(summonerObj['participants'])}. Not adding to the DB")
+                return
+            document = collection.find_one({"gameId": summonerObj['gameId']})
+            if document is not None:
+                await ctx.send(f"{summonerObj['gameId']} is already in the DB, not adding")
+                return
+
+            # If execution gets to this point, then its a valid match. Add it to the DB
             participantMap = {}
             for summoner in summonerObj['participants']:
                 participantMap[str(summoner['championId'])] = str(summoner['summonerName'])
-            db = self.mongoClient["Skynet"]
-            collection = db["InHouses"]
+
             addedBy = ctx.message.author.name + ctx.message.author.discriminator
             finalDict = {'matchId': summonerObj['gameId'], 'addedBy': addedBy, "gameData": participantMap}
             collection.insert_one(finalDict)
@@ -108,7 +132,7 @@ class InHouse(commands.Cog):
             await ctx.send(f"Something went wrong {e} ")
             return
 
-    # @commands.command()
+    #@commands.command()
     async def manualAddMatch(self, ctx):
         f = open("C:\\Users\\Joshua\\Documents\\Repos\\DiscordBot-Python\\cogs\\temp.json", "r")
         data = json.load(f)
