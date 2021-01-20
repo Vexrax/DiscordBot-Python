@@ -43,8 +43,8 @@ async def unload(ctx, extension):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send('Command not found')
-    user = client.get_user(botUtil.vexraxId)
-    await user.send(error)
+    channel = discord.utils.get(ctx.guild.channels, name="skynet-logs")
+    await channel.send(error)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):

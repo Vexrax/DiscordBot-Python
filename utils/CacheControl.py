@@ -57,7 +57,10 @@ class CacheControl:
             return stats
 
     async def getEncryptedSummonerId(self, summonerName):
-        summonerObj = requests.get(f'{riotAPIBase}/lol/summoner/v4/summoners/by-name/{summonerName}?api_key={APIKEY}').json()
+        response = requests.get(f'{riotAPIBase}/lol/summoner/v4/summoners/by-name/{summonerName}?api_key={APIKEY}')
+        if response.status_code != 200:
+            return ""
+        summonerObj = response.json()
         return summonerObj["id"]
 
     async def getSummonerIcon(self, summonerName):
@@ -68,8 +71,10 @@ class CacheControl:
         return summonerObj["profileIconId"]
 
     async def getLiveMatch(self, encryptedSummonerId):
-        summonerObj = requests.get(f'{riotAPIBase}/lol/spectator/v4/active-games/by-summoner/{encryptedSummonerId}?api_key={APIKEY}').json()
-        return summonerObj
+        response = requests.get(f'{riotAPIBase}/lol/spectator/v4/active-games/by-summoner/{encryptedSummonerId}?api_key={APIKEY}')
+        if response.status_code != 200:
+            return None
+        return response.json()
 
     async def aggregateUniqueChampionStats(self):
         db = self.mongoClient["Skynet"]
