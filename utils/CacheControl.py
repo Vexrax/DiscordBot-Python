@@ -109,9 +109,10 @@ class CacheControl:
                         data = requests.get(f"{cdragonChampionBase}/{ban['championId']}/data").json()
                         championDataDict[str(ban['championId'])] = data
                     data = championDataDict[str(ban['championId'])]
-                    if data['name'] not in championBanDict:
-                        championBanDict[data['name']] = 0
-                    championBanDict[data['name']] += 1
+                    name = regex.sub('', data['name'])
+                    if name not in championBanDict:
+                        championBanDict[name] = 0
+                    championBanDict[name] += 1
         return championBanDict
 
     async def aggregateStatsForEveryone(self):

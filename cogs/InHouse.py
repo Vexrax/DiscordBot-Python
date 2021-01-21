@@ -39,14 +39,14 @@ class InHouse(commands.Cog):
             'avgkills': (self.calculateGeneralAverageKDAStats, 'kills'),
             'avgdeaths': (self.calculateGeneralAverageKDAStats, 'deaths'),
             'avgassists': (self.calculateGeneralAverageKDAStats, 'assists'),
-            'highestavgvisionscore': (self.calculateGeneralVisionScoreStats, True),
-            'lowestavgvisionscore': (self.calculateGeneralVisionScoreStats, False),
+            'topavgvisionscore': (self.calculateGeneralVisionScoreStats, True),
+            'botavgvisionscore': (self.calculateGeneralVisionScoreStats, False),
             'topvspm': (self.calculateVisionScorePerMinute, True),
             'botvspm': (self.calculateVisionScorePerMinute, False),
-            'highestuniquechampions': (self.calculateUniqueChampionStats,True),
-            'lowestuniquechampions': (self.calculateUniqueChampionStats, False),
-            'highestkp': (self.calculateAverageKillParticipation, True),
-            'lowestkp': (self.calculateAverageKillParticipation, False),
+            'topuniquechampions': (self.calculateUniqueChampionStats,True),
+            'botuniquechampions': (self.calculateUniqueChampionStats, False),
+            'topkp': (self.calculateAverageKillParticipation, True),
+            'botkp': (self.calculateAverageKillParticipation, False),
             'ban': (self.calculateBanStats, None),
             'pick': (self.calculatePickStats, None),
             'presence': (self.calculatePresence, None),
@@ -247,7 +247,7 @@ class InHouse(commands.Cog):
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players", f"This stat tells us what your average % goldshare is")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players", f"This stat tells us what your average % of your teams total gold")
 
 
     async def calculatePresence(self):
