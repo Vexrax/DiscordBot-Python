@@ -3,6 +3,7 @@ import time
 from collections import Counter
 import re
 from pymongo import MongoClient
+import pymongo
 import requests
 
 riotAPIBase = "https://na1.api.riotgames.com"
@@ -119,6 +120,11 @@ class CacheControl:
         playersData = {}
         for document in collection.find():
             matchData = await self.getMatchReport(document["matchId"])
+
+            # Match isnt ready, skip it
+            if "gameId" not in matchData:
+                continue
+
             totalBlueKillsInMatch, totalRedKillsInMatch, totalBlueGold, totalRedGold, = 0, 0, 0, 0
             for player in matchData['participants']:
                 name = document['gameData'][str(player["championId"])]
@@ -157,7 +163,7 @@ class CacheControl:
         db = self.mongoClient["Skynet"]
         mongoMatchCollection = db["InHouses"]
         gameIds = {}
-        for document in mongoMatchCollection.find():
+        for document in mongoMatchCollection.find().sort("_id", -1):
             for key in document['gameData']:
                 if document['gameData'][key] == playername:
                     gameIds[document['matchId']] = key
@@ -171,12 +177,19 @@ class CacheControl:
         xpDiffs = Counter({})
         csDiffs = Counter({})
 
+        lastTenWR = 0
+
         gameCount = 0
         totalGameTime = 0
         championsInfo = {}
 
         for matchId in gameIds:
             matchData = await self.getMatchReport(matchId)
+
+            # Match isnt ready, skip it
+            if "gameId" not in matchData:
+                continue
+
             statsForMatch = Counter(self.findStatsFromParticipantList(matchData['participants'], gameIds[matchId]))
             diffsForMatch = self.generatePlayerDiffsFromMatch(matchData['participants'], gameIds[matchId])
 
@@ -190,10 +203,14 @@ class CacheControl:
             championsInfo[gameIds[matchId]].update(Counter({'win': statsForMatch['win'], 'games': 1}))
 
             gameCount += 1
+            if gameCount <= 10:
+                lastTenWR = playerStats['win'] / gameCount
+
             totalGameTime += int(matchData['gameDuration'] / 60)
 
         return {
             'gameCount' : gameCount,
+            'lastTenWR': round(lastTenWR, 2) * 100,
             'playerStats': playerStats,
             'totalGameTime': totalGameTime,
             'csDiffs': csDiffs,

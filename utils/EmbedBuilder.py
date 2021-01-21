@@ -34,17 +34,18 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
     goldDiffs = playerDataDict["goldDiffs"]
     xpDiffs = playerDataDict["xpDiffs"]
     champions = playerDataDict["champions"]
+    lastTenWR = playerDataDict["lastTenWR"]
 
     embed = discord.Embed(title=f"{summonerName}'s InHouse Stats", description=f"Cool Stats", color=discord.Color.dark_blue())
     embed.set_thumbnail(url=iconLink)
     embed.set_author(name=summonerName, icon_url=iconLink)
     embed.add_field(name="Games Played", value=f"{gameCount}")
-    embed.add_field(name="Win Rate", value=f"{round(playerStats['win'] / gameCount, 2) * 100}")
-    embed.add_field(name="Unique Champions", value=f"{len(champions.keys())}")
+    embed.add_field(name="Win Rate", value=f"{round(playerStats['win'] / gameCount, 2) * 100}%")
+    embed.add_field(name="Last 10 Games Win Rate", value=f"{lastTenWR}%")
 
     embed.add_field(name="Damage Per Gold", value=f"{round(playerStats['totalDamageDealtToChampions'] / playerStats['goldEarned'], 2)}", inline=True)
     embed.add_field(name="Damage Per Minute", value=f"{round(playerStats['totalDamageDealtToChampions'] / totalGameTime, 2)}", inline=True )
-    embed.add_field(name="\u200B", value="\u200B")
+    embed.add_field(name="Unique Champions", value=f"{len(champions.keys())}")
 
     embed.add_field(name="Average Kills Per Game", value=f"{round(playerStats['kills'] / gameCount, 2)}", inline=True)
     embed.add_field(name="Average Deaths Per Game", value=f"{round(playerStats['deaths'] / gameCount, 2)}", inline=True)
