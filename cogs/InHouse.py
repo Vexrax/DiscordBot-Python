@@ -9,7 +9,7 @@ from collections import Counter
 
 import json
 
-from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed
+from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed, generateMatchEmbed
 
 ddragonBase = "http://ddragon.leagueoflegends.com/cdn/10.25.1"
 ddragonBaseIcon = f"{ddragonBase}/img/profileicon/"
@@ -124,10 +124,12 @@ class InHouse(commands.Cog):
             for summoner in summonerObj['participants']:
                 participantMap[str(summoner['championId'])] = str(summoner['summonerName'])
 
+
             addedBy = ctx.message.author.name + ctx.message.author.discriminator
             finalDict = {'matchId': summonerObj['gameId'], 'addedBy': addedBy, "gameData": participantMap}
             collection.insert_one(finalDict)
-            await ctx.send(f"Added Match {summonerObj['gameId']} to the match database")
+            embedmatch = await generateMatchEmbed(summonerObj['gameId'], participantMap)
+            await ctx.send(embed=embedmatch)
         except Exception as e:
             await ctx.send(f"Something went wrong {e} ")
             return

@@ -116,6 +116,22 @@ async def generateInHouseHelpEmbed(commandList):
     embed.add_field(name=f"\u200B", value=f"\u200B")
     return embed
 
+async def generateMatchEmbed(matchId, playerDict):
+    embed = discord.Embed(title=f"{matchId} Live Right Now", description=f"Season 1 of In Houses", color=discord.Color.dark_green())
+    list = [(k, v) for k, v in playerDict.items()]
+    i = 0
+    try:
+        while i < 5:
+            embed.add_field(name=f"{list[i][1]}", value=f"{list[i][0]}")
+            embed.add_field(name="\u200B", value="\u200B")
+            embed.add_field(name=f"{list[i+5][1]}", value=f"{list[i+5][0]}")
+            i+=1
+    except:
+        embed = discord.Embed(title=f"{matchId} Live Right Now", description=f"Season 1 of In Houses",
+                              color=discord.Color.dark_green())
+    return embed
+
+
 def getWinrateColor(winrate):
     if winrate > 60:
         return "yaml"

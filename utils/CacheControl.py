@@ -8,7 +8,7 @@ import requests
 
 riotAPIBase = "https://na1.api.riotgames.com"
 APIKEY = os.getenv('RIOT') #DEV API key expires daily
-cdragonChampionBase = f" https://cdn.communitydragon.org/10.25.1/champion"
+cdragonChampionBase = f" https://cdn.communitydragon.org/11.2.1/champion"
 regex = re.compile('[^a-zA-Z]')
 
 '''
