@@ -185,7 +185,7 @@ class CacheControl:
         championKeyMap = await self.getChampionKeyMap()
         gameIds = {}
 
-
+        # sort by -1 to get matches in order of insertion
         for document in mongoMatchCollection.find().sort("_id", -1):
             for key in document['gameData']:
                 if document['gameData'][key] == playername:
@@ -221,7 +221,7 @@ class CacheControl:
             csDiffs.update(diffsForMatch["creepsPerMinDeltas"])
             playerStats = statsForMatch + playerStats
 
-            if gameIds[matchId] not in championsInfo:
+            if championKeyMap[gameIds[matchId]] not in championsInfo:
                 championsInfo[championKeyMap[gameIds[matchId]]] = Counter({'win': 0, 'games': 0})
             championsInfo[championKeyMap[gameIds[matchId]]].update(Counter({'win': statsForMatch['win'], 'games': 1}))
 
