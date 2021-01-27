@@ -8,7 +8,11 @@ import requests
 
 riotAPIBase = "https://na1.api.riotgames.com"
 APIKEY = os.getenv('RIOT') #DEV API key expires daily
-cdragonChampionBase = f" https://cdn.communitydragon.org/11.2.1/champion"
+version = requests.get("https://ddragon.leagueoflegends.com/api/versions.json").json()[0]
+cdragonChampionBase = f" https://cdn.communitydragon.org/{version}/champion"
+ddragonBase = f"http://ddragon.leagueoflegends.com/cdn/{version}"
+
+
 regex = re.compile('[^a-zA-Z]')
 
 '''
@@ -77,6 +81,24 @@ class CacheControl:
             return None
         return response.json()
 
+    async def getChampionKeyMap(self):
+        db = self.mongoClient["Skynet"]
+        collection = db["stats"]
+        document = collection.find_one({'id': 'champKeyMap'})
+
+        if (document is not None) and (document['version'] == version):
+            return document['map']
+
+        championKeyMap = {}
+        cdnChampionJson = requests.get(f"{ddragonBase}/data/en_US/champion.json").json()["data"]
+        for key in cdnChampionJson:
+            championKey = cdnChampionJson[key]["key"]
+            championKeyMap[championKey] = key
+
+        collection.delete_one({'id': 'champKeyMap'})
+        collection.insert_one({'id': 'champKeyMap', 'version': version, 'map': championKeyMap})
+        return championKeyMap
+
     async def aggregateUniqueChampionStats(self):
         db = self.mongoClient["Skynet"]
         collection = db["InHouses"]
@@ -99,17 +121,13 @@ class CacheControl:
         collection = db["InHouses"]
 
         championBanDict = {}
-        championDataDict = {}
+        championDataDict = await self.getChampionKeyMap()
 
         for document in collection.find():
             matchData = await self.getMatchReport(document["matchId"])
             for team in matchData['teams']:
                 for ban in team['bans']:
-                    if str(ban['championId']) not in championDataDict:
-                        data = requests.get(f"{cdragonChampionBase}/{ban['championId']}/data").json()
-                        championDataDict[str(ban['championId'])] = data
-                    data = championDataDict[str(ban['championId'])]
-                    name = regex.sub('', data['name'])
+                    name = regex.sub('', championDataDict[str(ban['championId'])])
                     if name not in championBanDict:
                         championBanDict[name] = 0
                     championBanDict[name] += 1
@@ -163,7 +181,11 @@ class CacheControl:
     async def aggregateStatsForPlayer(self, playername):
         db = self.mongoClient["Skynet"]
         mongoMatchCollection = db["InHouses"]
+
+        championKeyMap = await self.getChampionKeyMap()
         gameIds = {}
+
+
         for document in mongoMatchCollection.find().sort("_id", -1):
             for key in document['gameData']:
                 if document['gameData'][key] == playername:
@@ -200,8 +222,8 @@ class CacheControl:
             playerStats = statsForMatch + playerStats
 
             if gameIds[matchId] not in championsInfo:
-                championsInfo[gameIds[matchId]] = Counter({'win': 0, 'games': 0})
-            championsInfo[gameIds[matchId]].update(Counter({'win': statsForMatch['win'], 'games': 1}))
+                championsInfo[championKeyMap[gameIds[matchId]]] = Counter({'win': 0, 'games': 0})
+            championsInfo[championKeyMap[gameIds[matchId]]].update(Counter({'win': statsForMatch['win'], 'games': 1}))
 
             gameCount += 1
             if gameCount <= 10:
@@ -217,7 +239,7 @@ class CacheControl:
             'csDiffs': csDiffs,
             'goldDiffs': goldDiffs,
             'xpDiffs': xpDiffs,
-            'champions': self.convertChampionIdsKeysToNames(championsInfo)
+            'champions': championsInfo
         }
 
     async def aggregatePickStats(self):
@@ -225,18 +247,13 @@ class CacheControl:
         collection = db["InHouses"]
 
         champCountDict = {}
-        championDataDict = {}
+        championDataDict = await self.getChampionKeyMap()
 
         for document in collection.find():
             for champion in document['gameData'].keys():
-                if str(champion) not in championDataDict:
-                    data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
-                    championDataDict[str(champion)] = data['name']
                 name = regex.sub('', championDataDict[str(champion)])
-
                 if name not in champCountDict:
                     champCountDict[name] = 0
-
                 champCountDict[name] += 1
 
         return champCountDict
@@ -246,17 +263,6 @@ class CacheControl:
             if(str(champStats['championId']) == targetChampion):
                 return champStats['stats']
         return {}
-
-    def convertChampionIdsKeysToNames(self, championIdDict):
-        championDataDict = {}
-        returnDict = {}
-        for champion in championIdDict:
-            if str(champion) not in championDataDict:
-                data = requests.get(f"{cdragonChampionBase}/{champion}/data").json()
-                championDataDict[str(champion)] = data['name']
-            name = regex.sub('', championDataDict[str(champion)])
-            returnDict[name] = championIdDict[champion]
-        return returnDict
 
     def generatePlayerDiffsFromMatch(self, participantList, targetChampion):
         timelineTarget = {}
