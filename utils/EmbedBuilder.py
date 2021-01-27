@@ -131,6 +131,35 @@ async def generateMatchEmbed(matchId, playerDict):
                               color=discord.Color.dark_green())
     return embed
 
+async def generateGeneralStatsEmbed(summedDict, matchCount):
+    embed = discord.Embed(title=f"The KFC Season 1 Invitational", description=f"Season 1 of In Houses", color=discord.Color.dark_orange())
+    embed.set_thumbnail(url="https://ddragon.leagueoflegends.com/cdn/10.25.1/img/profileicon/3379.png") # Chicken Icon
+
+    embed.add_field(name="Games Played", value=f"{matchCount}")
+    embed.add_field(name="Total Damage", value=f"{summedDict['totalDamageDealtToChampions']}")
+    embed.add_field(name="\u200B", value="\u200B")
+
+    embed.add_field(name="Total Kills", value=f"{summedDict['kills']}")
+    embed.add_field(name="Total Deaths", value=f"{summedDict['deaths']}")
+    embed.add_field(name="Total Assists", value=f"{summedDict['assists']}")
+
+    embed.add_field(name="Total Physical Damage", value=f"{summedDict['physicalDamageDealtToChampions']}")
+    embed.add_field(name="Total Magic Damage", value=f"{summedDict['magicDamageDealtToChampions']}")
+    embed.add_field(name="Total True Damage", value=f"{summedDict['trueDamageDealtToChampions']}")
+
+    embed.add_field(name="Total Gold Earned", value=f"{summedDict['goldEarned']}")
+    embed.add_field(name="Total Gold Spent", value=f"{summedDict['goldSpent']}")
+    embed.add_field(name="\u200B", value="\u200B")
+
+    embed.add_field(name="Total Turret Kills", value=f"{summedDict['turretKills']}")
+    embed.add_field(name="Total Inhib Kills", value=f"{summedDict['inhibitorKills']}")
+    embed.add_field(name="Total Damage To Objectives", value=f"{summedDict['damageDealtToObjectives']}")
+
+    embed.add_field(name="Total CS", value=f"{summedDict['totalMinionsKilled'] + summedDict['neutralMinionsKilled']}")
+    embed.add_field(name="Wards Placed", value=f"{summedDict['wardsPlaced']}")
+    embed.add_field(name="Wards Killed", value=f"{summedDict['wardsKilled']}")
+
+    return embed
 
 def getWinrateColor(winrate):
     if winrate > 60:

@@ -83,7 +83,7 @@ class CacheControl:
 
     async def getChampionKeyMap(self):
         db = self.mongoClient["Skynet"]
-        collection = db["stats"]
+        collection = db["Stats"]
         document = collection.find_one({'id': 'champKeyMap'})
 
         if (document is not None) and (document['version'] == version):

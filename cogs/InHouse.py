@@ -9,7 +9,7 @@ from collections import Counter
 
 import json
 
-from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed, generateMatchEmbed
+from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed, generateMatchEmbed, generateGeneralStatsEmbed
 
 ddragonBase = "http://ddragon.leagueoflegends.com/cdn/10.25.1"
 ddragonBaseIcon = f"{ddragonBase}/img/profileicon/"
@@ -53,7 +53,7 @@ class InHouse(commands.Cog):
             'topgames': (self.calculateGameCount, None),
             'topgoldshare': (self.calculateGoldShareStats, True),
             'botgoldshare': (self.calculateGoldShareStats, False),
-
+            'general': (self.calculateGeneralLeagueStats, None)
         }
 
     @commands.Cog.listener()
@@ -251,6 +251,12 @@ class InHouse(commands.Cog):
             lbName = "Bottom 5"
         return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players", f"This stat tells us what your average % of your teams total gold")
 
+    async def calculateGeneralLeagueStats(self):
+        leagueDict = await self.generateGeneralLeagueStatsDict()
+        db = self.mongoClient["Skynet"]
+        collection = db["InHouses"]
+        matchCount = collection.find().count()
+        return await generateGeneralStatsEmbed(leagueDict, matchCount)
 
     async def calculatePresence(self):
         bans = Counter(await self.cacheControl.getStats('ban'))
@@ -283,8 +289,14 @@ class InHouse(commands.Cog):
                 elif type == "summedAvg":
                     LeaderBoardDict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]]), 2)
 
-
         return sorted(LeaderBoardDict.items(), key=operator.itemgetter(1), reverse=sortDecending)
+
+    async def generateGeneralLeagueStatsDict(self):
+        playersData = await self.cacheControl.getStats('general')
+        leagueSummedStats = Counter({})
+        for player in playersData:
+            leagueSummedStats.update(Counter(playersData[player]))
+        return leagueSummedStats
 
 def setup(client):
     client.add_cog(InHouse(client))
