@@ -84,7 +84,7 @@ class InHouse(commands.Cog):
         await ctx.send(embed=embed)
         return
 
-    @commands.has_role('Admin')
+    @commands.has_any_role('Admin', 'GALAXY BRAIN')
     @commands.command()
     async def addMatchForInHouseStats(self, ctx, username):
 
@@ -128,7 +128,13 @@ class InHouse(commands.Cog):
             addedBy = ctx.message.author.name + ctx.message.author.discriminator
             finalDict = {'matchId': summonerObj['gameId'], 'addedBy': addedBy, "gameData": participantMap}
             collection.insert_one(finalDict)
-            embedmatch = await generateMatchEmbed(summonerObj['gameId'], participantMap)
+
+            championMap = {}
+            championKeyMap = await self.cacheControl.getChampionKeyMap()
+            for key in participantMap:
+                championMap[championKeyMap[key]] = participantMap[key]
+
+            embedmatch = await generateMatchEmbed(summonerObj['gameId'], championMap)
             await ctx.send(embed=embedmatch)
         except Exception as e:
             await ctx.send(f"Something went wrong {e} ")
