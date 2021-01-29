@@ -35,6 +35,7 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
     xpDiffs = playerDataDict["xpDiffs"]
     champions = playerDataDict["champions"]
     lastTenWR = playerDataDict["lastTenWR"]
+    roleData = playerDataDict["roles"]
 
     embed = discord.Embed(title=f"{summonerName}'s InHouse Stats", description=f"Cool Stats", color=discord.Color.dark_blue())
     embed.set_thumbnail(url=iconLink)
@@ -51,9 +52,15 @@ async def generateEmbedForPlayerStats(summonerName, playerDataDict, iconLink):
     embed.add_field(name="Average Deaths Per Game", value=f"{round(playerStats['deaths'] / gameCount, 2)}", inline=True)
     embed.add_field(name="Average Assists Per Game", value=f"{round(playerStats['assists'] / gameCount, 2)}", inline=True)
 
+    roleString = ""
+    for role in roleData:
+        roleString += f"{role}: *{round((roleData[role]['win'] / roleData[role]['games']) * 100, 2)}%* ({roleData[role]['games']})\n"
+
     embed.add_field(name="Objective Damage Per Game", value=f"{round(playerStats['damageDealtToObjectives'] / gameCount, 2)}", inline=True)
     embed.add_field(name="Turrets Killed", value=f"{playerStats['turretKills']}" , inline=True)
-    embed.add_field(name="\u200B", value="\u200B")
+    embed.add_field(name="Roles Played", value=f"{roleString}", inline=True)
+
+
 
     embed.add_field(name="CS per min", value=f"{round((playerStats['totalMinionsKilled'] + playerStats['neutralMinionsKilled']) / totalGameTime, 2)}", inline=True)
     embed.add_field(name="Average Vision Score", value=f"{round((playerStats['visionScore']) / gameCount, 2)}", inline=True)

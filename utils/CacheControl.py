@@ -199,6 +199,7 @@ class CacheControl:
         goldDiffs = Counter({})
         xpDiffs = Counter({})
         csDiffs = Counter({})
+        roles = {}
 
         lastTenWR = 0
 
@@ -219,6 +220,11 @@ class CacheControl:
             goldDiffs.update(diffsForMatch["goldPerMinDeltas"])
             xpDiffs.update(diffsForMatch["xpPerMinDeltas"])
             csDiffs.update(diffsForMatch["creepsPerMinDeltas"])
+
+            if diffsForMatch["role"] not in roles:
+                roles[diffsForMatch["role"]] = Counter({'win': 0, 'games': 0})
+            roles[diffsForMatch["role"]].update({'win': statsForMatch['win'], 'games': 1})
+
             playerStats = statsForMatch + playerStats
 
             if championKeyMap[gameIds[matchId]] not in championsInfo:
@@ -239,7 +245,8 @@ class CacheControl:
             'csDiffs': csDiffs,
             'goldDiffs': goldDiffs,
             'xpDiffs': xpDiffs,
-            'champions': championsInfo
+            'champions': championsInfo,
+            'roles': roles
         }
 
     async def aggregatePickStats(self):
@@ -289,8 +296,22 @@ class CacheControl:
                 cs.subtract(Counter(champStats['timeline']["creepsPerMinDeltas"]))
                 gold.subtract(Counter(champStats['timeline']["goldPerMinDeltas"]))
 
+
                 return {
                     "creepsPerMinDeltas": cs,
                     "xpPerMinDeltas": xp,
-                    "goldPerMinDeltas": gold
+                    "goldPerMinDeltas": gold,
+                    "role": getRoleFromParticipantId(particpantId)
                 }
+
+def getRoleFromParticipantId(participantId):
+    if participantId == 1 or participantId == 6:
+        return 'TOP'
+    elif participantId == 2 or participantId == 7:
+        return 'JG'
+    elif participantId == 3 or participantId == 8:
+        return 'MID'
+    elif participantId == 4 or participantId == 9:
+        return 'BOT'
+    else:
+        return 'SUP'
