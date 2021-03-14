@@ -14,7 +14,6 @@ from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerS
 ddragonBase = "http://ddragon.leagueoflegends.com/cdn/10.25.1"
 ddragonBaseIcon = f"{ddragonBase}/img/profileicon/"
 
-minRequiredGames = 5
 maxDisplayLeaderboard = 5
 
 
@@ -279,6 +278,10 @@ class InHouse(commands.Cog):
 
     async def generateLeaderboardDict(self, type, sortDecending, *argv):
         playersData = await self.cacheControl.getStats('general')
+        db = self.mongoClient["Skynet"]
+        collection = db["InHouses"]
+        matchCount = collection.find().count()
+        minRequiredGames = int(round(matchCount * 0.1))
         LeaderBoardDict = {}
         for key in playersData:
             if playersData[key]['totalGames'] >= minRequiredGames:
