@@ -29,7 +29,7 @@ class CacheControl:
         document = collection.find_one({"gameId": matchId})
         if not document is None:
             return document
-        response = requests.get(f'{riotAPIBase}/lol/match/v4/matches/{matchId}?api_key={APIKEY}')
+        response = requests.get(f'{riotAPIBase}/lol/match/v5/matches/{matchId}?api_key={APIKEY}')
         data = response.json()
 
         if response.status_code != 200:
