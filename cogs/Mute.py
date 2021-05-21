@@ -85,5 +85,11 @@ class Mute(commands.Cog):
 
         return True
 
+
+async def handleOnMessage(message):
+    textMuteRole = discord.utils.get(message.guild.roles, name=textMuteRoleName)
+    if textMuteRole in message.author.roles:
+        await message.delete()
+
 def setup(client):
     client.add_cog(Mute(client))

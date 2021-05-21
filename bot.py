@@ -1,5 +1,6 @@
 import discord
 import os
+import cogs.Mute
 from discord.ext import commands
 import utils.Util as botUtil
 
@@ -45,6 +46,13 @@ async def on_command_error(ctx, error):
         await ctx.send('Command not found')
     channel = discord.utils.get(ctx.guild.channels, name="skynet-logs")
     await channel.send(error)
+
+@client.event
+async def on_message(message):
+    await client.process_commands(message)
+
+    # Custom Message Handling
+    await cogs.Mute.handleOnMessage(message)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
