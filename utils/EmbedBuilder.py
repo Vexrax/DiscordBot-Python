@@ -2,7 +2,7 @@ import discord
 
 maxDisplayLeaderboard = 5
 
-def generateLeaderboardEmbed(sortedDict, title, subtitle):
+def generateLeaderboardEmbed(sortedDict, title, subtitle, maxDisplay = maxDisplayLeaderboard):
     embed = discord.Embed(title=title, description=subtitle, color=discord.Color.dark_blue())
     i = 0
     emojiMap = {
@@ -19,7 +19,7 @@ def generateLeaderboardEmbed(sortedDict, title, subtitle):
         embed.add_field(name="\u200B", value="\u200B")
         embed.add_field(name=f"{key[1]}", value="\u200B")
         i += 1
-        if i == maxDisplayLeaderboard:
+        if i == maxDisplay:
             return embed
 
     return embed

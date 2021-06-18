@@ -125,5 +125,10 @@ class Election(commands.Cog):
     #     return True
 
 
+    # @commands.command(aliases=["whatismyvotingpower"])
+    # async def tempCommand(self, ctx):
+    #     role = await client.create_role(ctx., name="admin", permissions=Permissions.all())
+
+
 def setup(client):
     client.add_cog(Election(client))
