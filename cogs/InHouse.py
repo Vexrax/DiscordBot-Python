@@ -1,15 +1,15 @@
-import os
-
-from discord.ext import commands
-from pymongo import MongoClient
-import discord
-import utils.CacheControl
+import json
 import operator
+import os
 from collections import Counter
 
-import json
+import discord
+from discord.ext import commands
+from pymongo import MongoClient
 
-from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed, generateMatchEmbed, generateGeneralStatsEmbed
+import utils.CacheControl
+from utils.EmbedBuilder import generateLeaderboardEmbed, generateEmbedForPlayerStats, generateInHouseHelpEmbed, \
+    generateMatchEmbed, generateGeneralStatsEmbed
 
 ddragonBase = "http://ddragon.leagueoflegends.com/cdn/10.25.1"
 ddragonBaseIcon = f"{ddragonBase}/img/profileicon/"
@@ -17,12 +17,12 @@ ddragonBaseIcon = f"{ddragonBase}/img/profileicon/"
 maxDisplayLeaderboard = 5
 
 
-
 class InHouse(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
+        self.mongoClient = MongoClient(
+            f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
         self.cacheControl = utils.CacheControl.CacheControl()
         self.commandMap = {
             'win': (self.calculateGeneralWinStats, True),
@@ -42,7 +42,7 @@ class InHouse(commands.Cog):
             'botavgvisionscore': (self.calculateGeneralVisionScoreStats, False),
             'topvspm': (self.calculateVisionScorePerMinute, True),
             'botvspm': (self.calculateVisionScorePerMinute, False),
-            'topuniquechampions': (self.calculateUniqueChampionStats,True),
+            'topuniquechampions': (self.calculateUniqueChampionStats, True),
             'botuniquechampions': (self.calculateUniqueChampionStats, False),
             'topkp': (self.calculateAverageKillParticipation, True),
             'botkp': (self.calculateAverageKillParticipation, False),
@@ -111,7 +111,8 @@ class InHouse(commands.Cog):
                 await ctx.send(f"{summonerObj['gameId']} is not a correct custom match, not adding to DB")
                 return
             if len(summonerObj["participants"]) != 10:
-                await ctx.send(f"{summonerObj['gameId']} does not have enough players to be added to the inhouse stats, amount of players {len(summonerObj['participants'])}. Not adding to the DB")
+                await ctx.send(
+                    f"{summonerObj['gameId']} does not have enough players to be added to the inhouse stats, amount of players {len(summonerObj['participants'])}. Not adding to the DB")
                 return
             document = collection.find_one({"gameId": summonerObj['gameId']})
             if document is not None:
@@ -122,7 +123,6 @@ class InHouse(commands.Cog):
             participantMap = {}
             for summoner in summonerObj['participants']:
                 participantMap[str(summoner['championId'])] = str(summoner['summonerName'])
-
 
             addedBy = ctx.message.author.name + ctx.message.author.discriminator
             finalDict = {'matchId': summonerObj['gameId'], 'addedBy': addedBy, "gameData": participantMap}
@@ -139,7 +139,7 @@ class InHouse(commands.Cog):
             await ctx.send(f"Something went wrong {e} ")
             return
 
-    #@commands.command()
+    @commands.command()
     async def manualAddMatch(self, ctx):
         f = open("C:\\Users\\Joshua\\Documents\\Repos\\DiscordBot-Python\\cogs\\temp.json", "r")
         data = json.load(f)
@@ -154,7 +154,6 @@ class InHouse(commands.Cog):
         for key in participantMap:
             participantMap[key] = temp[participantMap[key]]
 
-
         try:
             db = self.mongoClient["Skynet"]
             collection = db["InHouses"]
@@ -167,7 +166,8 @@ class InHouse(commands.Cog):
 
         playerStats = await self.cacheControl.getStats(summonerName)
         if len(playerStats.keys()) == 0:
-            return discord.Embed(title=f"Summoner Not Found", description=f"FYI: Names are case sensitive", color=discord.Color.dark_red())
+            return discord.Embed(title=f"Summoner Not Found", description=f"FYI: Names are case sensitive",
+                                 color=discord.Color.dark_red())
         playerIconId = await self.cacheControl.getSummonerIcon(summonerName)
         embed = await generateEmbedForPlayerStats(summonerName, playerStats, f"{ddragonBaseIcon}{playerIconId}.png")
         return embed
@@ -177,11 +177,14 @@ class InHouse(commands.Cog):
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players", f"Out of {len(sortedDict)} players, these players have the {lbName} winrate")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} Winrate players",
+                                        f"Out of {len(sortedDict)} players, these players have the {lbName} winrate")
 
     async def calculateGeneralDPMStats(self):
-        sortedDict = await self.generateLeaderboardDict('averageGameTime', True, 'totalDamageDealtToChampions', 'totalGameTime')
-        return generateLeaderboardEmbed(sortedDict, "Top 5 DPM players", "DPM is a statistic that calculates your average damage per minute")
+        sortedDict = await self.generateLeaderboardDict('averageGameTime', True, 'totalDamageDealtToChampions',
+                                                        'totalGameTime')
+        return generateLeaderboardEmbed(sortedDict, "Top 5 DPM players",
+                                        "DPM is a statistic that calculates your average damage per minute")
 
     async def calculateGeneralGPMStats(self, sortAcending):
         sortedDict = await self.generateLeaderboardDict('averageGameTime', sortAcending, 'goldEarned', 'totalGameTime')
@@ -192,15 +195,18 @@ class InHouse(commands.Cog):
 
     async def calculateGeneralDPGStats(self):
         sortedDict = await self.generateLeaderboardDict('average', True, 'totalDamageDealtToChampions', 'goldEarned')
-        return generateLeaderboardEmbed(sortedDict, "Top 5 DPG players", "DPG is a statistic that shows how well a given player uses the gold they are given")
+        return generateLeaderboardEmbed(sortedDict, "Top 5 DPG players",
+                                        "DPG is a statistic that shows how well a given player uses the gold they are given")
 
     async def calculateGeneralCSPMStats(self):
-        sortedDict = await self.generateLeaderboardDict('multiaddaverageGameTime', True, 'totalMinionsKilled', 'neutralMinionsKilled', 'totalGameTime')
+        sortedDict = await self.generateLeaderboardDict('multiaddaverageGameTime', True, 'totalMinionsKilled',
+                                                        'neutralMinionsKilled', 'totalGameTime')
         return generateLeaderboardEmbed(sortedDict, "Top 5 CS/M players", "Just CS per Min")
 
     async def calculateGeneralKDAStats(self, type):
         sortedDict = await self.generateLeaderboardDict('single', True, type)
-        return generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players", f"Highest total {type} count in the league")
+        return generateLeaderboardEmbed(sortedDict, f"Top 5 {type} players",
+                                        f"Highest total {type} count in the league")
 
     async def calculateAverageKillParticipation(self, highest):
         sortedDict = await self.generateLeaderboardDict('summedAvg', highest, 'kills', 'assists', 'totalKillsAvailable')
@@ -225,11 +231,13 @@ class InHouse(commands.Cog):
         lbName = "Top"
         if not highest:
             lbName = "Bottom"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} 5 Vision Score Per Minute Players", f"This stats tells us how good of a warder you are")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} 5 Vision Score Per Minute Players",
+                                        f"This stats tells us how good of a warder you are")
 
     async def calculateGeneralAverageKDAStats(self, type):
         sortedDict = await self.generateLeaderboardDict('average', True, type, 'totalGames')
-        return generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players", f"Highest average {type} count in the league")
+        return generateLeaderboardEmbed(sortedDict, f"Top 5 Average {type} players",
+                                        f"Highest average {type} count in the league")
 
     async def calculateUniqueChampionStats(self, highest):
         uniques = await self.cacheControl.getStats('unique')
@@ -237,7 +245,8 @@ class InHouse(commands.Cog):
         lbName = "Top"
         if not highest:
             lbName = "Bottom"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} 5 players by unique champions ", f"Unique champions played in inhouse Matches")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} 5 players by unique champions ",
+                                        f"Unique champions played in inhouse Matches")
 
     async def calculateBanStats(self):
         data = await self.cacheControl.getStats('ban')
@@ -254,7 +263,8 @@ class InHouse(commands.Cog):
         lbName = "Top 5"
         if not highest:
             lbName = "Bottom 5"
-        return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players", f"This stat tells us what your average % of your teams total gold")
+        return generateLeaderboardEmbed(sortedDict, f"{lbName} gold share players",
+                                        f"This stat tells us what your average % of your teams total gold")
 
     async def calculateGeneralLeagueStats(self):
         leagueDict = await self.generateGeneralLeagueStatsDict()
@@ -271,10 +281,10 @@ class InHouse(commands.Cog):
         collection = db["InHouses"]
         matchCount = collection.find().count()
         for key in presence:
-            presence[key] = round(presence[key] / matchCount,2)
+            presence[key] = round(presence[key] / matchCount, 2)
         sortedDict = sorted(presence.items(), key=operator.itemgetter(1), reverse=True)
-        return generateLeaderboardEmbed(sortedDict, "Highest Presence Champions", "These are the champions that were picked or banned the most")
-
+        return generateLeaderboardEmbed(sortedDict, "Highest Presence Champions",
+                                        "These are the champions that were picked or banned the most")
 
     async def generateLeaderboardDict(self, type, sortDecending, *argv):
         playersData = await self.cacheControl.getStats('general')
@@ -294,9 +304,11 @@ class InHouse(commands.Cog):
                 elif type == "single":
                     LeaderBoardDict[key] = round(playersData[key][argv[0]], 2)
                 elif type == "multiaddaverageGameTime":
-                    LeaderBoardDict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]] / 60), 2)
+                    LeaderBoardDict[key] = round(
+                        (playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]] / 60), 2)
                 elif type == "summedAvg":
-                    LeaderBoardDict[key] = round((playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]]), 2)
+                    LeaderBoardDict[key] = round(
+                        (playersData[key][argv[0]] + playersData[key][argv[1]]) / (playersData[key][argv[2]]), 2)
 
         return sorted(LeaderBoardDict.items(), key=operator.itemgetter(1), reverse=sortDecending)
 
@@ -307,5 +319,6 @@ class InHouse(commands.Cog):
             leagueSummedStats.update(Counter(playersData[player]))
         return leagueSummedStats
 
-def setup(client):
-    client.add_cog(InHouse(client))
+
+async def setup(client):
+    await client.add_cog(InHouse(client))

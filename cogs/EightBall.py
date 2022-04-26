@@ -1,6 +1,9 @@
-import discord
 import random
 from discord.ext import commands
+import random
+
+from discord.ext import commands
+
 
 class EightBall(commands.Cog):
 
@@ -32,5 +35,6 @@ class EightBall(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please ask a question or say something')
 
-def setup(client):
-    client.add_cog(EightBall(client))
+
+async def setup(client):
+    await client.add_cog(EightBall(client))

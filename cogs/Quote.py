@@ -1,6 +1,6 @@
+import json
 import os
 import random
-import time
 
 from discord.ext import commands
 from pymongo import MongoClient
@@ -8,16 +8,16 @@ from pymongo import MongoClient
 import utils.Util as botUtil
 import utils.VoteUtil as voteUtil
 
-import json
-
 votesRequiredToPass = 200
 minvoteRequired = 220
+
 
 class Quote(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
+        self.mongoClient = MongoClient(
+            f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -25,7 +25,7 @@ class Quote(commands.Cog):
 
     @commands.command()
     async def quote(self, ctx):
-       await self.findRandomQuote(ctx)
+        await self.findRandomQuote(ctx)
 
     @commands.command()
     async def quoteadd(self, ctx, quote, author, year):
@@ -42,31 +42,34 @@ class Quote(commands.Cog):
 
     @commands.command()
     async def quote(self, ctx):
-       await self.findRandomQuote(ctx)
+        await self.findRandomQuote(ctx)
 
     @commands.command()
     async def quotefrom(self, ctx, author):
-       try:
-        await self.findRandomQuote(ctx, {"author": author.capitalize()})
-       except Exception:
-        print(Exception)
-        await ctx.send("Could not find a quote from that person")
+        try:
+            await self.findRandomQuote(ctx, {"author": author.capitalize()})
+        except Exception:
+            print(Exception)
+            await ctx.send("Could not find a quote from that person")
 
-    async def findRandomQuote(self, ctx, params = {}):
+    async def findRandomQuote(self, ctx, params=None):
+        if params is None:
+            params = {}
         db = self.mongoClient["Skynet"]
         collection = db["Quotes"]
         doc = collection.find(params)
-        randomInt = random.randint(0, doc.count()-1)
+        randomInt = random.randint(0, doc.count() - 1)
         result = doc.limit(1).skip(randomInt)
         randomDoc = result.next()
-        quote, author, context, year = randomDoc.get('quote'), randomDoc.get('author'), randomDoc.get('context'), randomDoc.get('year')
+        quote, author, context, year = randomDoc.get('quote'), randomDoc.get('author'), randomDoc.get(
+            'context'), randomDoc.get('year')
         await ctx.send(f'"{quote}" -{author} {context} {year}')
 
     async def addQuoteToDatabase(self, ctx, author, year, quote):
         try:
             db = self.mongoClient["Skynet"]
             collection = db["Quotes"]
-            collection.insert_one({'quote' : quote, "author": author, "year": year, "context": ""})
+            collection.insert_one({'quote': quote, "author": author, "year": year, "context": ""})
             await ctx.send("Added quote to database")
         except Exception:
             await ctx.send("Failed to add the quote to the database")
@@ -81,8 +84,7 @@ class Quote(commands.Cog):
         f.write("[")
         newDict = {}
         for document in collection.find():
-
-            #this is bad but its internal Command so whatever
+            # this is bad but its internal Command so whatever
             newDict['quote'] = document['quote']
             newDict['year'] = document['year']
             newDict['author'] = document['author']
@@ -90,5 +92,7 @@ class Quote(commands.Cog):
             f.write(json.dumps(newDict) + ",")
         f.write("]")
         f.close()
-def setup(client):
-    client.add_cog(Quote(client))
+
+
+async def setup(client):
+    await client.add_cog(Quote(client))

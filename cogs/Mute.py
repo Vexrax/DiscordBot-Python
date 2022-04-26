@@ -10,6 +10,7 @@ votesRequiredToPass = 300
 textMuteRoleName = "TextMute"
 timeToStayTextMuted = 120
 
+
 class Mute(commands.Cog):
 
     def __init__(self, client):
@@ -65,7 +66,6 @@ class Mute(commands.Cog):
         target = user.mention
         textMuteRole = discord.utils.get(ctx.guild.roles, name=textMuteRoleName)
 
-
         voteMessage = f"Vote has been started to text mute the user {target} for {timeToStayTextMuted} seconds. react with 👍 or 👎 to vote on if this user should be text muted"
         message = await voteUtil.setupVote(ctx, voteMessage, voteUtil.timeforvote)
         if await voteUtil.hasVotePassed(ctx, ctx.channel, message.id, votesRequiredToPass):
@@ -85,12 +85,11 @@ class Mute(commands.Cog):
 
         return True
 
-
 async def handleOnMessage(message):
     textMuteRole = discord.utils.get(message.guild.roles, name=textMuteRoleName)
 
     if hasattr(message.author, "roles") and len(message.author.roles) > 0 and textMuteRole in message.author.roles:
         await message.delete()
 
-def setup(client):
-    client.add_cog(Mute(client))
+async def setup(client):
+    await client.add_cog(Mute(client))

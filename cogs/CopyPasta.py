@@ -1,19 +1,21 @@
+import os
+
 import discord
-import random
-import utils.Util as botUtil
 from discord.ext import commands
 from pymongo import MongoClient
-import os
-import time
+
+import utils.Util as botUtil
 import utils.VoteUtil as voteUtil
 
 votesRequiredToPass = 150
+
 
 class CopyPasta(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
+        self.mongoClient = MongoClient(
+            f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -24,11 +26,13 @@ class CopyPasta(commands.Cog):
         db = self.mongoClient["Skynet"]
         collection = db["CopyPasta"].find({})
         for document in collection:
-            descriptionArr = document.get('description').split("\\r\\n") # handling newlines manually because mongo doesnt seem to do it right?
+            descriptionArr = document.get('description').split(
+                "\\r\\n")  # handling newlines manually because mongo doesnt seem to do it right?
             description = ""
             for line in descriptionArr:
                 description += line + "\n\n"
-            await ctx.send(embed=discord.Embed( title=document.get("title"), description=description, color=discord.Color.dark_purple()))
+            await ctx.send(embed=discord.Embed(title=document.get("title"), description=description,
+                                               color=discord.Color.dark_purple()))
 
     @commands.command()
     async def copypastaadd(self, ctx, pasta, title):
@@ -48,10 +52,11 @@ class CopyPasta(commands.Cog):
         try:
             db = self.mongoClient["Skynet"]
             collection = db["CopyPasta"]
-            collection.insert_one({'title' : title, "description": pasta })
+            collection.insert_one({'title': title, "description": pasta})
             await ctx.send("Added pasta to database")
         except Exception:
             await ctx.send("Failed to add the quote to the database")
 
-def setup(client):
-    client.add_cog(CopyPasta(client))
+
+async def setup(client):
+    await client.add_cog(CopyPasta(client))
