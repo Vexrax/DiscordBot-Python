@@ -1,7 +1,3 @@
-import time
-import asyncio
-from discord.utils import get
-
 vexraxId = 188313190214533120
 skynetId = 361282484400553985
 

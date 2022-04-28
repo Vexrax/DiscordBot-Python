@@ -7,7 +7,7 @@ import utils.Util as botUtil
 from cogs.Mute import handleOnMessage
 
 intents = discord.Intents.all()
-client = commands.Bot(command_prefix="//", intents=intents)
+client = commands.Bot(command_prefix="!", intents=intents)
 
 def is_me():
     def predicate(ctx):
