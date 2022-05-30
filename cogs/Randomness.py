@@ -20,6 +20,13 @@ class Randomness(commands.Cog):
     async def rolldice(self, ctx):
         await ctx.send(f'Dice rolled a {random.randint(1, 6)}')
 
+    @commands.command()
+    async def mentalhelp(self, ctx):
+        target = ""
+        if len(ctx.message.mentions) != 0:
+            user = ctx.message.mentions[0]
+            target = user.mention
+        await ctx.send(f'https://www.google.com/search?client=firefox-b-1-d&q=mental+hospitals+near+me+ {target}')
 
 async def setup(client):
     await client.add_cog(Randomness(client))

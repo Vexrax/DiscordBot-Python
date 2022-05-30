@@ -16,14 +16,14 @@ class PrivateChannel(commands.Cog):
         print("Private Channel Command Ready")
         self.cleanupUnusedPrivateChannels.start()
 
-    @commands.command()
+    @commands.command(aliases=["privatechannel"])
     async def privateChannel(self, ctx):
         mentions = ctx.message.mentions
         if len(mentions) == 0:
             await ctx.send('You cannot make a private channel for just yourself. Get some friends!')
             return
 
-        category = discord.utils.get(ctx.guild.categories, name="General")
+        category = discord.utils.get(ctx.guild.categories, name="private")
 
         voiceChannelName = f'{namingConvention}{ctx.message.author.name}'
 

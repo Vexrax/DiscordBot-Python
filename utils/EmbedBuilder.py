@@ -170,7 +170,7 @@ async def generateGeneralStatsEmbed(summedDict, matchCount):
 
 def generateReminderEmbed(message):
     embed = discord.Embed(title="Reminder For:", description=message, color=discord.Color.dark_blue())
-    embed.add_field(name=f":hourglass: :hourglass: Select timeunit! :hourglass: :hourglass:", value=f"Select a unit of time using the buttons below!")
+    embed.add_field(name=f":hourglass: :hourglass: Select a unit of time! :hourglass: :hourglass:", value=f"Select a unit of time using the buttons below!")
     return embed
 
 def getWinrateColor(winrate):

@@ -27,7 +27,7 @@ class RemindMe(commands.Cog):
         print("Remindme Command Ready")
         self.checkReminders.start()
 
-    @commands.command()
+    @commands.command(aliases=["remindme"])
     async def remindMe(self, ctx, message, time):
         view = View(timeout=100)
         for key in self.units:
