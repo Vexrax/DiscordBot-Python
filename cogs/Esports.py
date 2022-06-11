@@ -1,9 +1,9 @@
-from discord.ext import commands
-import pytz
 from datetime import datetime
-import discord
-import requests
 
+import discord
+import pytz
+import requests
+from discord.ext import commands
 
 leagueImages = {
     "LCS": "https://am-a.akamaihd.net/image/?resize=60:&f=https%3A%2F%2Flolstatic-a.akamaihd.net%2Fesports-assets%2Fproduction%2Fleague%2Flcs-79qe3e0y.png",
@@ -13,6 +13,7 @@ leagueImages = {
 }
 
 leagueEsportsAPIBase = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
+
 
 class Esports(commands.Cog):
 
@@ -24,8 +25,8 @@ class Esports(commands.Cog):
         print("Esports Command Ready")
 
     @commands.command()
-    async def schedule(self, ctx, game = None, league = None):
-        if game == "league" or  game == "leagueoflegends":
+    async def schedule(self, ctx, game=None, league=None):
+        if game == "league" or game == "leagueoflegends":
             await self.getLeagueOfLegendsSchedule(ctx, league)
         elif game == "dota":
             await self.getAllGamesSchedule(ctx)
@@ -36,7 +37,9 @@ class Esports(commands.Cog):
 
     async def getLeagueOfLegendsSchedule(self, ctx, league):
         embedDict = {}
-        resp = requests.get(f'{leagueEsportsAPIBase}?hl=en-US&leagueId=98767991299243165%2C98767991302996019%2C98767991310872058%2C98767991314006698', headers={'x-api-key': '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z'})
+        resp = requests.get(
+            f'{leagueEsportsAPIBase}?hl=en-US&leagueId=98767991299243165%2C98767991302996019%2C98767991310872058%2C98767991314006698',
+            headers={'x-api-key': '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z'})
 
         if resp.status_code != 200:
             await ctx.send('Something went wrong trying to request the lolesports API')
@@ -45,12 +48,16 @@ class Esports(commands.Cog):
 
         for match in data:
             if not match["league"]["name"] in embedDict.keys():
-                embedDict[match["league"]["name"]] = discord.Embed( title=match["league"]["name"], description=f"Schedule for {match['league']['name']}", color=discord.Color.dark_purple())
+                embedDict[match["league"]["name"]] = discord.Embed(title=match["league"]["name"],
+                                                                   description=f"Schedule for {match['league']['name']}",
+                                                                   color=discord.Color.dark_purple())
                 embedDict[match["league"]["name"]].set_thumbnail(url=leagueImages[match['league']['name']])
-            if not match["state"] == "completed" :
-                embedDict[match["league"]["name"]].add_field(name=match["blockName"], value=f"{match['match']['teams'][0]['name']} VS {match['match']['teams'][1]['name']}")
-                embedDict[match["league"]["name"]].add_field(name="\u200B", value="\u200B" )
-                embedDict[match["league"]["name"]].add_field(name="\u200B", value=f"{self.formatTime(match['startTime'])}")
+            if not match["state"] == "completed":
+                embedDict[match["league"]["name"]].add_field(name=match["blockName"],
+                                                             value=f"{match['match']['teams'][0]['name']} VS {match['match']['teams'][1]['name']}")
+                embedDict[match["league"]["name"]].add_field(name="\u200B", value="\u200B")
+                embedDict[match["league"]["name"]].add_field(name="\u200B",
+                                                             value=f"{self.formatTime(match['startTime'])}")
 
         if league and league in embedDict.keys():
             await ctx.send(embed=embedDict[league])
@@ -78,5 +85,5 @@ class Esports(commands.Cog):
         return time.astimezone(est).strftime('%Y-%m-%d %z %Z')
 
 
-def setup(client):
-    client.add_cog(Esports(client))
+async def setup(client):
+    await client.add_cog(Esports(client))

@@ -1,10 +1,13 @@
+import asyncio
+
 import discord
 import os
-import cogs.Mute
 from discord.ext import commands
 import utils.Util as botUtil
+from cogs.Mute import handleOnMessage
 
-client = commands.Bot(command_prefix="//")
+intents = discord.Intents.all()
+client = commands.Bot(command_prefix="!", intents=intents)
 
 def is_me():
     def predicate(ctx):
@@ -27,18 +30,18 @@ async def ping(ctx):
 @client.command()
 @is_me()
 async def load(ctx, extension):
-    client.load_extension(f'cogs.{extension}')
+    await client.load_extension(f'cogs.{extension}')
 
 @client.command()
 @is_me()
 async def reload(ctx, extension):
-    client.unload_extension(f'cogs.{extension}')
-    client.reload_extension(f'cogs.{extension}')
+    await client.unload_extension(f'cogs.{extension}')
+    await client.reload_extension(f'cogs.{extension}')
 
 @client.command()
 @is_me()
 async def unload(ctx, extension):
-    client.unload_extension(f'cogs.{extension}')
+    await client.unload_extension(f'cogs.{extension}')
 
 @client.event
 async def on_command_error(ctx, error):
@@ -52,12 +55,17 @@ async def on_message(message):
     await client.process_commands(message)
 
     # Custom Message Handling
-    await cogs.Mute.handleOnMessage(message)
+    await handleOnMessage(message)
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        client.load_extension(f'cogs.{filename[:-3]}')
+async def registerCogs():
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await client.load_extension(f'cogs.{filename[:-3]}')
+
+async def main():
+    await registerCogs()
+    await client.start(os.getenv('DISCORD'))
+
+asyncio.run(main())
 
 
-
-client.run(os.getenv('DISCORD'))
