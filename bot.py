@@ -63,9 +63,9 @@ async def registerCogs():
             await client.load_extension(f'cogs.{filename[:-3]}')
 
 async def main():
-    async with client:
-        await registerCogs()
-        await client.start(os.getenv('DISCORD'))
+    await registerCogs()
+    await client.start(os.getenv('DISCORD'))
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
+
 
