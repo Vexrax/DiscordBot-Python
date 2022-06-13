@@ -40,7 +40,7 @@ class RemindMe(commands.Cog):
         db = self.mongoClient["Skynet"]
         collection = db["Reminders"]
         for document in collection.find():
-            if datetime.datetime.timestamp(datetime.datetime.now()) * 1000 < document.get("timestamp"):
+            if datetime.datetime.timestamp(datetime.datetime.now()) < document.get("timestamp"):
                 continue
 
             collection.delete_one(document)
@@ -75,16 +75,19 @@ class ReminderButton(Button):
             mongoClient = MongoClient(f"mongodb+srv://Dueces:{os.getenv('MONGOPASSWORD')}@cluster0-mzmgc.mongodb.net/test?retryWrites=true&w=majority")
             db = mongoClient["Skynet"]
             collection = db["Reminders"]
+            dbTimestamp = datetime.datetime.timestamp(timestamp)
             collection.insert_one({'id': self.author.id,
                                    "reminder": self.message,
                                    "guild": self.guildId,
                                    "channel": self.channelName,
-                                   "timestamp": datetime.datetime.timestamp(timestamp) * 1000
+                                   "timestamp": dbTimestamp
                                    })
             await interaction.response.edit_message(
-                content=f'{self.author.mention} I will remind you in {self.amount} {self.timeunit} for the reminder: "{self.message}"',
-                embed=None,
-                view=None)
+                content=f'{self.author.mention} I will remind you at '
+                        f'{datetime.datetime.fromtimestamp(dbTimestamp, datetime.timezone(datetime.timedelta(hours=-4))).strftime("%b %d %Y %I:%M %p")} EST '
+                        f'for the reminder: "{self.message}"',
+                        embed=None,
+                        view=None)
         except ValueError:
             await interaction.response.edit_message(content="Something went wrong. Try again later!", view=None)
 
