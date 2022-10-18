@@ -1,6 +1,6 @@
 dnspython
 git+https://github.com/Rapptz/discord.py@master#egg=discord.py
-pymongo
+pymongo == 3.12.2
 youtube_dl
 requests
 pytz
